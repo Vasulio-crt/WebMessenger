@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="style.css">
+	<title>Мессенджер ВосюляV1</title>
+	<style>
+		.received {
+			color: #00529B;
+			background-color: #c9e1ff;
+		}
+
+		.sent {
+			color: #236e23;
+			background-color: #dcf8c6;
+		}
+	</style>
+</head>
+<body>
+	<h2>Мессенджер ВосюляV1</h2>
+	<ul id="messages"></ul>
+	<input id="messageBox" type="text" placeholder="Type message here and press Enter"/>
+
+	<script>
+		// This is a simple way to distinguish users. 
+		// In a real app, you'd use a login system.
+		const userId = "user-" + Math.random().toString(16).slice(2);
+
+		(function() {
+			const socket = new WebSocket("ws://192.168.0.15:8080/ws");
+			const messages = document.getElementById("messages");
+			const messageBox = document.getElementById("messageBox");
+
+			window.addEventListener("beforeunload", function (e) {
+				e.preventDefault();
+				e.returnValue = 'Сообщения будут потеряны.';
+			});
+			function displayMessage(data) {
+				const message = document.createElement("li");
+				// Assuming the server sends JSON like: {"senderId": "...", "text": "..."}
+				// If the server sends plain text, we'll parse it differently.
+				try {
+					const parsedData = JSON.parse(data);
+					message.textContent = parsedData.text;
+
+					if (parsedData.senderId === userId) {
+						message.classList.add("sent");
+					} else {
+						message.classList.add("received");
+					}
+				} catch (e) {
+					// Fallback for servers that send plain text
+					message.textContent = data;
+					message.classList.add("received"); // Assume it's from others
+				}
+				
+				messages.appendChild(message);
+				messages.scrollTop = messages.scrollHeight; // Auto-scroll to the latest message
+			}
+
+			socket.onopen = function(event) {
+				console.log("WebSocket connection established.");
+			};
+
+			socket.onmessage = function(event) {
+				displayMessage(event.data);
+			};
+
+			socket.onclose = function(event) {
+				console.log("WebSocket connection closed.");
+				const message = document.createElement("li");
+				message.textContent = "Connection closed.";
+				message.style.textAlign = "center";
+				message.style.color = "#888";
+				messages.appendChild(message);
+			};
+
+			socket.onerror = function(error) {
+				console.error("WebSocket Error: ", error);
+			};
+
+			messageBox.addEventListener("keydown", function(event) {
+				if (event.key === "Enter") {
+					event.preventDefault(); // Prevents adding a new line
+					const messageText = messageBox.value.trim();
+					if (messageText !== "") {
+						const messagePayload = JSON.stringify({
+							senderId: userId,
+							text: messageText
+						});
+						socket.send(messagePayload);
+						messageBox.value = "";
+					}
+				}
+			});
+		})();
+	</script>
+</body>
+</html>
