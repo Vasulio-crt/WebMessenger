@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="style.css">
-	<title>Мессенджер ВосюляV1</title>
+	<title>Мессенджер ВосюляV1.1</title>
 	<style>
 		.received {
 			color: #00529B;
@@ -18,28 +18,24 @@
 	</style>
 </head>
 <body>
-	<h2>Мессенджер ВосюляV1</h2>
+	<h2>Мессенджер ВосюляV1.1</h2>
 	<ul id="messages"></ul>
-	<input id="messageBox" type="text" placeholder="Type message here and press Enter"/>
+	<input id="messageInput" maxlength="500" type="text" placeholder="Type message here and press Enter"/>
 
 	<script>
-		// This is a simple way to distinguish users. 
-		// In a real app, you'd use a login system.
-		const userId = "user-" + Math.random().toString(16).slice(2);
-
-		(function() {
-			const socket = new WebSocket("ws://192.168.0.15:8080/ws");
+		let userId = localStorage.getItem('userId');
+		if (!userId) {
+			userId = "user-" + Math.random().toString(16).slice(2);
+			localStorage.setItem('userId', userId);
+		}
+		const IP = "192.168.0.15";
+		(function () {
+			const socket = new WebSocket(`ws://${IP}:8080/ws`);
 			const messages = document.getElementById("messages");
-			const messageBox = document.getElementById("messageBox");
+			const messageInput = document.getElementById("messageInput");
 
-			window.addEventListener("beforeunload", function (e) {
-				e.preventDefault();
-				e.returnValue = 'Сообщения будут потеряны.';
-			});
 			function displayMessage(data) {
 				const message = document.createElement("li");
-				// Assuming the server sends JSON like: {"senderId": "...", "text": "..."}
-				// If the server sends plain text, we'll parse it differently.
 				try {
 					const parsedData = JSON.parse(data);
 					message.textContent = parsedData.text;
@@ -50,13 +46,12 @@
 						message.classList.add("received");
 					}
 				} catch (e) {
-					// Fallback for servers that send plain text
 					message.textContent = data;
-					message.classList.add("received"); // Assume it's from others
+					message.classList.add("received");
 				}
 				
 				messages.appendChild(message);
-				messages.scrollTop = messages.scrollHeight; // Auto-scroll to the latest message
+				messages.scrollTop = messages.scrollHeight;
 			}
 
 			socket.onopen = function(event) {
@@ -80,19 +75,51 @@
 				console.error("WebSocket Error: ", error);
 			};
 
-			messageBox.addEventListener("keydown", function(event) {
+			messageInput.addEventListener("keydown", function(event) {
 				if (event.key === "Enter") {
-					event.preventDefault(); // Prevents adding a new line
-					const messageText = messageBox.value.trim();
+					event.preventDefault();
+					const messageText = messageInput.value.trim();
 					if (messageText !== "") {
 						const messagePayload = JSON.stringify({
 							senderId: userId,
 							text: messageText
 						});
 						socket.send(messagePayload);
-						messageBox.value = "";
+						messageInput.value = "";
 					}
 				}
+			});
+
+			function loadHistory() {
+				fetch("/history")
+					.then(response => {
+						if (!response.ok) {
+							throw new Error("Network response was not ok");
+						}
+						return response.json();
+					})
+					.then(history => {
+						if (history === null) {
+							console.log("History is empty.");
+						} else {
+							messages.innerHTML = ''; 
+							history.forEach((obj) => displayMessage(JSON.stringify(obj)));
+							console.log("History loaded.");
+						}
+					})
+					.catch(error => {
+						console.error("Error loading history:", error);
+						alert("Не удалось загрузить историю сообщений.");
+					});
+			};
+
+			// window
+			window.onload = function () {
+				loadHistory();
+			};
+			window.addEventListener("beforeunload", function (e) {
+				e.preventDefault();
+				e.returnValue = 'Сообщения будут потеряны.';
 			});
 		})();
 	</script>
