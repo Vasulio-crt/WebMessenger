@@ -1,127 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" type="image/x-icon" href="/favicon.svg">
+	<title>Мессенджер ВосюляV1.2</title>
 	<link rel="stylesheet" href="style.css">
-	<title>Мессенджер ВосюляV1.1</title>
-	<style>
-		.received {
-			color: #00529B;
-			background-color: #c9e1ff;
-		}
-
-		.sent {
-			color: #236e23;
-			background-color: #dcf8c6;
-		}
-	</style>
 </head>
 <body>
-	<h2>Мессенджер ВосюляV1.1</h2>
-	<ul id="messages"></ul>
-	<input id="messageInput" maxlength="500" type="text" placeholder="Type message here and press Enter"/>
+	<!-- Боковая панель -->
+	<div class="sidebar">
+		<div class="sidebar-header">
+			<h2>Мое Приложение</h2>
+			<p>Панель управления</p>
+		</div>
+		
+		<nav class="sidebar-menu">
+			<ul>
+				<li><a href="/chat" class="active">GLOBAL CHAT</a></li>
+			</ul>
+		</nav>
+		
+		<div class="sidebar-footer">
+			&copy; 2023 Мое Приложение
+		</div>
+	</div>
 
-	<script>
-		let userId = localStorage.getItem('userId');
-		if (!userId) {
-			userId = "user-" + Math.random().toString(16).slice(2);
-			localStorage.setItem('userId', userId);
-		}
-		const IP = "192.168.0.15";
-		(function () {
-			const socket = new WebSocket(`ws://${IP}:8080/ws`);
-			const messages = document.getElementById("messages");
-			const messageInput = document.getElementById("messageInput");
+	<!-- Основной контент -->
+	<main class="main-content">
+		<div class="content-header">
+			<h1>Мессенджер ВосюляV1.2</h1>
+		</div>
+		<div class="content">
+			<ul id="messages"></ul>
+			<input id="messageInput" maxlength="500" type="text" placeholder="Type message here and press Enter"/>
+		</div>
+	</main>
 
-			function displayMessage(data) {
-				const message = document.createElement("li");
-				try {
-					const parsedData = JSON.parse(data);
-					message.textContent = parsedData.text;
-
-					if (parsedData.senderId === userId) {
-						message.classList.add("sent");
-					} else {
-						message.classList.add("received");
-					}
-				} catch (e) {
-					message.textContent = data;
-					message.classList.add("received");
-				}
-				
-				messages.appendChild(message);
-				messages.scrollTop = messages.scrollHeight;
-			}
-
-			socket.onopen = function(event) {
-				console.log("WebSocket connection established.");
-			};
-
-			socket.onmessage = function(event) {
-				displayMessage(event.data);
-			};
-
-			socket.onclose = function(event) {
-				console.log("WebSocket connection closed.");
-				const message = document.createElement("li");
-				message.textContent = "Connection closed.";
-				message.style.textAlign = "center";
-				message.style.color = "#888";
-				messages.appendChild(message);
-			};
-
-			socket.onerror = function(error) {
-				console.error("WebSocket Error: ", error);
-			};
-
-			messageInput.addEventListener("keydown", function(event) {
-				if (event.key === "Enter") {
-					event.preventDefault();
-					const messageText = messageInput.value.trim();
-					if (messageText !== "") {
-						const messagePayload = JSON.stringify({
-							senderId: userId,
-							text: messageText
-						});
-						socket.send(messagePayload);
-						messageInput.value = "";
-					}
-				}
-			});
-
-			function loadHistory() {
-				fetch("/history")
-					.then(response => {
-						if (!response.ok) {
-							throw new Error("Network response was not ok");
-						}
-						return response.json();
-					})
-					.then(history => {
-						if (history === null) {
-							console.log("History is empty.");
-						} else {
-							messages.innerHTML = ''; 
-							history.forEach((obj) => displayMessage(JSON.stringify(obj)));
-							console.log("History loaded.");
-						}
-					})
-					.catch(error => {
-						console.error("Error loading history:", error);
-						alert("Не удалось загрузить историю сообщений.");
-					});
-			};
-
-			// window
-			window.onload = function () {
-				loadHistory();
-			};
-			window.addEventListener("beforeunload", function (e) {
-				e.preventDefault();
-				e.returnValue = 'Сообщения будут потеряны.';
-			});
-		})();
-	</script>
+	<script src="script.js"></script>
 </body>
 </html>
