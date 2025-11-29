@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="icon" type="image/x-icon" href="/favicon.svg">
+	<link rel="icon" href="./favicon.png">
 	<title>Мессенджер ВосюляV1.2</title>
 	<link rel="stylesheet" href="style.css">
 </head>
@@ -11,30 +11,43 @@
 	<!-- Боковая панель -->
 	<div class="sidebar">
 		<div class="sidebar-header">
-			<h2>Мое Приложение</h2>
-			<p>Панель управления</p>
+			<h2>WebMessenger</h2>
+			<p id="userName">НИК</p>
 		</div>
 		
+		<div class="search">
+			<input id="searchInput" maxlength="100" type="text" placeholder="Search"/>
+			<label for="search" style="position: absolute; left: 13rem; cursor: pointer;">❌</label>
+		</div>
+
 		<nav class="sidebar-menu">
-			<ul>
+			<ul style=>
 				<li><a href="/chat" class="active">GLOBAL CHAT</a></li>
+				<li><a href="#">human 1</a></li>
+				<li><a href="#">human 2</a></li>
+				<li><a href="#">human 3</a></li>
+				<li><a href="#">human 4</a></li>
+				<li><a href="#">human 5</a></li>
+				<li><a href="#">human 6</a></li>
+				<li><a href="#">human 7</a></li>
+				<li><a href="#">human 8</a></li>
+				<li><a href="#">human 9</a></li>
+				<li><a href="#">human 9</a></li>
+				<li><a href="#">human 9</a></li>
+				<li><a href="#">human 9</a></li>
 			</ul>
 		</nav>
 		
 		<div class="sidebar-footer">
-			&copy; 2023 Мое Приложение
+			&copy; 2025 WebMessenger
 		</div>
 	</div>
 
 	<!-- Основной контент -->
 	<main class="main-content">
-		<div class="content-header">
-			<h1>Мессенджер ВосюляV1.2</h1>
-		</div>
-		<div class="content">
-			<ul id="messages"></ul>
-			<input id="messageInput" maxlength="500" type="text" placeholder="Type message here and press Enter"/>
-		</div>
+		<h1>Мессенджер v1.2</h1>
+		<ul id="messages"></ul>
+		<input id="messageInput" maxlength="500" type="text" placeholder="Type message here and press Enter"/>
 	</main>
 
 	<script src="script.js"></script>

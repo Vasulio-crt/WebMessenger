@@ -27,12 +27,13 @@ body {
 	box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 	display: flex;
 	flex-direction: column;
+	max-height: 100vh;
 }
 
 .sidebar-header {
 	padding: 20px;
 	text-align: center;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	border-bottom: 2px solid #f2f2f2;
 }
 
 .sidebar-header h2 {
@@ -40,52 +41,63 @@ body {
 	margin-bottom: 5px;
 }
 
-.sidebar-header p {
-	font-size: 0.8rem;
-	opacity: 0.7;
+.search {
+	display: flex;
+	align-items: center;
+	border-bottom: 2px solid #f2f2f2;;
+}
+
+#searchInput {
+	background-color: #027368;
+	color: #f2f2f2;
+	border: none;
+	max-width: 100%;
+	margin: 5px 7px;
+	border-radius: 17px;
+	text-align: start;
+}
+
+#searchInput::placeholder {
+	color: #f2f2f2;
+	text-align: start;
 }
 
 .sidebar-menu {
-	flex: 1;
-	padding: 20px 0;
+	display: block;
+	overflow: scroll;
 }
 
 .sidebar-menu ul {
 	list-style: none;
+	overflow-y: scroll;
 }
 
 .sidebar-menu li {
-	margin-bottom: 5px;
+	margin-bottom: 3px;
 }
 
 .sidebar-menu a {
 	display: flex;
 	align-items: center;
 	padding: 12px 20px;
-	color: white;
+	color: #f2f2f2;
 	text-decoration: none;
-	transition: all 0.3s;
 	border-left: 3px solid transparent;
 }
 
 .sidebar-menu a:hover {
-	background-color: rgba(255, 255, 255, 0.1);
-	border-left: 3px solid #3498db;
+	background-color: #027368ab;
+	border-left: 4px solid #F2B33D;
 }
 
 .sidebar-menu a.active {
-	background-color: rgba(255, 255, 255, 0.15);
-	border-left: 3px solid #3498db;
-}
-
-.sidebar-menu i {
-	margin-right: 10px;
-	font-size: 1.2rem;
+	background-color: #02736855;
+	border-left: 3px solid #F2B33D;
 }
 
 .sidebar-footer {
 	padding: 15px;
-	border-top: 1px solid rgba(255, 255, 255, 0.1);
+	border-top: 2px solid #f2f2f2;
 	text-align: center;
 	font-size: 0.8rem;
 	opacity: 0.7;
@@ -98,30 +110,9 @@ body {
 	overflow-y: auto;
 }
 
-.content-header {
-	margin-bottom: 30px;
-}
-
-.content-header h1 {
-	color: #2c3e50;
-	margin-bottom: 10px;
-}
-
-.card {
-	background: white;
-	border-radius: 8px;
-	padding: 20px;
-	box-shadow: 0 4px 6px rgba(183, 134, 134, 0.1);
-}
-
-.card h3 {
-	color: #2c3e50;
-	margin-bottom: 10px;
-}
-
 /* Messages */
 #messages {
-	max-height: 37rem;
+	max-height: 38rem;
 	min-width: 100px;
 	max-width: 95%;
 	list-style-type: none;
@@ -155,7 +146,11 @@ body {
 	background-color: #027368;
 }
 
-#messageInput {
+.server-mes {
+	background-color: #a31313;
+}
+
+input {
 	padding: 10px;
 	border: 1px solid #ccc;
 	border-radius: 5px;
@@ -164,6 +159,11 @@ body {
 	width: 95%;
 	margin-bottom: 20px;
 	box-sizing: border-box;
+}
+
+input:focus-visible {
+	border-color: #F2B33D;
+	outline: 2px solid #F2B33D;
 }
 
 /* Адаптивность */

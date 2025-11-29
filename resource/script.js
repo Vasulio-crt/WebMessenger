@@ -1,8 +1,10 @@
-let userId = localStorage.getItem('userId');
+let userId = localStorage.getItem("userId");
 if (!userId) {
 	userId = "user-" + Math.random().toString(16).slice(2);
-	localStorage.setItem('userId', userId);
+	localStorage.setItem("userId", userId);
 }
+
+document.getElementById("userName").innerText = userId;
 
 const IP = "10.136.119.49";
 
@@ -15,9 +17,12 @@ function displayMessage(data) {
 	try {
 		const parsedData = JSON.parse(data);
 		message.textContent = parsedData.text;
+		console.log(parsedData);
 
 		if (parsedData.senderId === userId) {
 			message.classList.add("sent-mes");
+		} else if(parsedData.senderId === "server") {
+			message.classList.add("server-mes");
 		} else {
 			message.classList.add("received-mes");
 		}
