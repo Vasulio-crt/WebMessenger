@@ -17,7 +17,6 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	database.ConnectDB()
-	database.CreateIndexes()
 	defer func() {
 		if err := database.MongoClient.Disconnect(context.TODO()); err != nil {
 			panic(err)

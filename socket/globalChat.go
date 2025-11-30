@@ -31,12 +31,6 @@ const maxMessageLength = 500
 var clients = make(map[*websocket.Conn]bool)
 var clientsMutex = sync.Mutex{}
 
-// debug color
-const ResetColor string = "\033[0m"
-const RedColor string = "\033[31m"
-const GreenColor string = "\033[32m"
-const YellowColor string = "\033[33m"
-
 func GlobalChat(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -72,7 +66,6 @@ func GlobalChat(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		msg.Timestamp = time.Now()
-		fmt.Println(YellowColor+"msg:  ", msg) // -----debug-----
 
 		// Пересобираем сообщение в JSON с таймстемпом для отправки клиентам
 		updatedBodyBytes, err := json.Marshal(msg)
@@ -82,7 +75,6 @@ func GlobalChat(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if len(msg.Text) > maxMessageLength {
-			fmt.Printf("Message from %s rejected, too long: %d chars\n", msg.SenderID, len(msg.Text))
 			conn.WriteMessage(websocket.TextMessage, []byte(`{"senderId":"server","text":"Your message is too long (max 500 chars)"}`))
 			continue
 		}
@@ -95,7 +87,6 @@ func GlobalChat(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		fmt.Printf("msgBytes: %s%s\n", bodyBytes, ResetColor) // -----debug-----
 		broadcastMessage(updatedBodyBytes)
 	}
 }
@@ -119,7 +110,7 @@ func GlobalHistory(w http.ResponseWriter, r *http.Request) {
 
 	// Опции для поиска: последние 50 сообщений, отсортированные по времени
 	findOptions := options.Find()
-	findOptions.SetSort(bson.D{{"timestamp", -1}})
+	findOptions.SetSort(bson.D{{Key: "timestamp", Value: -1}})
 	findOptions.SetLimit(50)
 
 	cursor, err := collection.Find(r.Context(), bson.D{}, findOptions)
