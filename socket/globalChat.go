@@ -1,12 +1,17 @@
 package socket
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
-	"fmt"
+	"time"
+	"webMessenger/database"
 
 	"github.com/gorilla/websocket"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var upgrader = websocket.Upgrader{
@@ -15,20 +20,16 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-// Message определяет структуру сообщения чата
 type Message struct {
-	SenderID string `json:"senderId"`
-	Text     string `json:"text"`
+	SenderID  string    `json:"senderId"`
+	Text      string    `json:"text"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 const maxMessageLength = 500
-const maxHistorySize = 50
 
 var clients = make(map[*websocket.Conn]bool)
 var clientsMutex = sync.Mutex{}
-
-var messageHistory []Message
-var historyMutex = sync.Mutex{}
 
 // debug color
 const ResetColor string = "\033[0m"
@@ -48,7 +49,7 @@ func GlobalChat(w http.ResponseWriter, r *http.Request) {
 	clients[conn] = true
 	clientsMutex.Unlock()
 
-	fmt.Println(clients);
+	fmt.Println(clients)
 
 	for {
 		_, bodyBytes, err := conn.ReadMessage()
@@ -70,26 +71,32 @@ func GlobalChat(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Error unmarshaling message:", err)
 			continue
 		}
-		fmt.Println(YellowColor + "msg:  ", msg) // -----debug-----
+		msg.Timestamp = time.Now()
+		fmt.Println(YellowColor+"msg:  ", msg) // -----debug-----
 
-		if len(msg.Text) > maxMessageLength {
-			fmt.Printf("Message from %s rejected, too long: %d chars\n", msg.SenderID, len(msg.Text))
-			conn.WriteMessage(websocket.TextMessage, []byte(`{"senderId":"server","text":"You message long 500 char"}`))
+		// Пересобираем сообщение в JSON с таймстемпом для отправки клиентам
+		updatedBodyBytes, err := json.Marshal(msg)
+		if err != nil {
+			fmt.Println("Error marshaling updated message:", err)
 			continue
 		}
 
-		historyMutex.Lock()
-		messageHistory = append(messageHistory, msg)
-
-		fmt.Println("messageHistory:  ", messageHistory) // -----debug-----
-
-		if len(messageHistory) > maxHistorySize {
-			messageHistory = messageHistory[len(messageHistory) - maxHistorySize:]
+		if len(msg.Text) > maxMessageLength {
+			fmt.Printf("Message from %s rejected, too long: %d chars\n", msg.SenderID, len(msg.Text))
+			conn.WriteMessage(websocket.TextMessage, []byte(`{"senderId":"server","text":"Your message is too long (max 500 chars)"}`))
+			continue
 		}
-		historyMutex.Unlock()
+
+		// Сохранение сообщения в MongoDB
+		collection := database.GetCollection("webMessenger", "messages")
+		_, err = collection.InsertOne(context.Background(), msg)
+		if err != nil {
+			fmt.Println("Error inserting message to MongoDB:", err)
+			continue
+		}
 
 		fmt.Printf("msgBytes: %s%s\n", bodyBytes, ResetColor) // -----debug-----
-		broadcastMessage(bodyBytes)
+		broadcastMessage(updatedBodyBytes)
 	}
 }
 
@@ -108,8 +115,27 @@ func broadcastMessage(message []byte) {
 }
 
 func GlobalHistory(w http.ResponseWriter, r *http.Request) {
-	historyMutex.Lock()
-	defer historyMutex.Unlock()
+	collection := database.GetCollection("webMessenger", "messages")
+
+	// Опции для поиска: последние 50 сообщений, отсортированные по времени
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{{"timestamp", -1}})
+	findOptions.SetLimit(50)
+
+	cursor, err := collection.Find(r.Context(), bson.D{}, findOptions)
+	if err != nil {
+		http.Error(w, "Failed to retrieve message history", http.StatusInternalServerError)
+		fmt.Println("Error finding messages in MongoDB:", err)
+		return
+	}
+	defer cursor.Close(r.Context())
+
+	var messageHistory []Message
+	if err = cursor.All(r.Context(), &messageHistory); err != nil {
+		http.Error(w, "Failed to decode message history", http.StatusInternalServerError)
+		fmt.Println("Error decoding messages from MongoDB:", err)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(messageHistory)

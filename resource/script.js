@@ -17,7 +17,6 @@ function displayMessage(data) {
 	try {
 		const parsedData = JSON.parse(data);
 		message.textContent = parsedData.text;
-		console.log(parsedData);
 
 		if (parsedData.senderId === userId) {
 			message.classList.add("sent-mes");
