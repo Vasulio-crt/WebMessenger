@@ -2,7 +2,7 @@
 	font-family: RazerF5;
 	font-weight: normal;
 	font-stretch: 70%;
-	src: url("./fonts/dehinted-RazerF5-Bold.ttf");
+	src: url("dehinted-RazerF5-Bold.ttf");
 }
 
 * {
@@ -14,7 +14,7 @@
 
 body {
 	display: flex;
-	min-height: 100vh;
+	max-height: 100vh;
 	background-color: #f2f2f2;
 }
 
@@ -63,13 +63,11 @@ body {
 }
 
 .sidebar-menu {
-	display: block;
-	overflow: scroll;
+	overflow-y: scroll;
 }
 
 .sidebar-menu ul {
 	list-style: none;
-	overflow-y: scroll;
 }
 
 .sidebar-menu li {

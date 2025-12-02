@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
-	"time"
 	"webMessenger/database"
 
 	"github.com/gorilla/websocket"
@@ -23,10 +22,9 @@ var upgrader = websocket.Upgrader{
 type Message struct {
 	SenderID  string    `json:"senderId"`
 	Text      string    `json:"text"`
-	Timestamp time.Time `json:"timestamp"`
 }
 
-const maxMessageLength = 500
+const maxMessageLength int = 500 * 2
 
 var clients = make(map[*websocket.Conn]bool)
 var clientsMutex = sync.Mutex{}
@@ -42,8 +40,6 @@ func GlobalChat(w http.ResponseWriter, r *http.Request) {
 	clientsMutex.Lock()
 	clients[conn] = true
 	clientsMutex.Unlock()
-
-	fmt.Println(clients)
 
 	for {
 		_, bodyBytes, err := conn.ReadMessage()
@@ -65,29 +61,21 @@ func GlobalChat(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Error unmarshaling message:", err)
 			continue
 		}
-		msg.Timestamp = time.Now()
-
-		// Пересобираем сообщение в JSON с таймстемпом для отправки клиентам
-		updatedBodyBytes, err := json.Marshal(msg)
-		if err != nil {
-			fmt.Println("Error marshaling updated message:", err)
-			continue
-		}
 
 		if len(msg.Text) > maxMessageLength {
 			conn.WriteMessage(websocket.TextMessage, []byte(`{"senderId":"server","text":"Your message is too long (max 500 chars)"}`))
 			continue
 		}
 
-		// Сохранение сообщения в MongoDB
-		collection := database.GetCollection("webMessenger", "messages")
+		// Сохранение сообщения в БД
+		collection := database.GetCollection("globalMessages")
 		_, err = collection.InsertOne(context.Background(), msg)
 		if err != nil {
 			fmt.Println("Error inserting message to MongoDB:", err)
 			continue
 		}
 
-		broadcastMessage(updatedBodyBytes)
+		broadcastMessage(bodyBytes)
 	}
 }
 
@@ -106,11 +94,10 @@ func broadcastMessage(message []byte) {
 }
 
 func GlobalHistory(w http.ResponseWriter, r *http.Request) {
-	collection := database.GetCollection("webMessenger", "messages")
+	collection := database.GetCollection("globalMessages")
 
-	// Опции для поиска: последние 50 сообщений, отсортированные по времени
 	findOptions := options.Find()
-	findOptions.SetSort(bson.D{{Key: "timestamp", Value: -1}})
+	findOptions.SetSort(bson.D{{Key: "_id", Value: -1}})
 	findOptions.SetLimit(50)
 
 	cursor, err := collection.Find(r.Context(), bson.D{}, findOptions)

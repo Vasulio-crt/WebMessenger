@@ -1,34 +1,55 @@
 package user
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 	"webMessenger/database"
 	"webMessenger/user/utilities"
 )
 
 type Session struct {
-	SessionToken string    `bson:"session_token"`
-	CreatedAt    time.Time `bson:"created_at"`
+	SessionToken string `bson:"session_token"`
+	UserName     string `bson:"user_name"`
+}
+
+type User struct {
+	UserName string `json:"user_name"`
+	Password string `json:"password"`
 }
 
 func Registration(w http.ResponseWriter, r *http.Request) {
-	cookieValue := utilities.GenerateValueCookie()
-	println("cookieValue", cookieValue) // debug
-	if cookieValue == "" {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Failed to generate cookie value"))
+	var req User
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "error server (json)", http.StatusInternalServerError)
 		return
 	}
 
-	// Сохранение сессии в MongoDB
-	collection := database.GetCollection("webMessenger", "sessions")
-	session := Session{SessionToken: cookieValue, CreatedAt: time.Now()}
+	// Сохранения пользователя в БД
+	if req.UserName == "" || req.Password == "" {
+		http.Error(w, "the fields are empty", http.StatusBadRequest)
+		return
+	}
+
+	collection := database.GetCollection("users")
+	if _, err := collection.InsertOne(r.Context(), req); err != nil {
+		http.Error(w, "error server (db)", http.StatusInternalServerError)
+		return
+	}
+	
+	cookieValue := utilities.GenerateValueCookie()
+	if cookieValue == "" {
+		http.Error(w, "Failed to generate cookie value", http.StatusInternalServerError)
+		return
+	}
+	
+	
+	// Сохранение сессии в БД
+	collection = database.GetCollection("sessions")
+	session := Session{SessionToken: cookieValue, UserName: req.UserName}
 	_, err := collection.InsertOne(r.Context(), session)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Failed to save session"))
+		http.Error(w, "Failed to save session", http.StatusInternalServerError)
 		fmt.Println("Error inserting session to MongoDB:", err)
 		return
 	}
@@ -42,6 +63,8 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteStrictMode, // Защита от CSRF
 	}
 	http.SetCookie(w, cookie)
+
+	// TODO: сделать redirect
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {

@@ -4,16 +4,35 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"webMessenger/database"
 	"webMessenger/socket"
 	"webMessenger/user"
-	"webMessenger/database"
 
 	"github.com/gorilla/mux"
 )
 
 func redirect(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/chat/", http.StatusPermanentRedirect)
+	http.Redirect(w, r, "/globalChat/", http.StatusPermanentRedirect)
 }
+
+/* func authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("session")
+		if err != nil {
+			if err == http.ErrNoCookie {
+				http.Redirect(w, r, "/registration", http.StatusFound)
+				return
+			}
+			http.Error(w, "Bad request", http.StatusBadRequest)
+			return
+		}
+
+		// TODO: Проверить значение cookie в базе данных
+		_ = cookie.Value
+
+		next.ServeHTTP(w, r)
+	})
+} */
 
 func main() {
 	database.ConnectDB()
@@ -25,15 +44,17 @@ func main() {
 
 	router := mux.NewRouter()
 
-	fs := http.FileServer(http.Dir("./resource"))
-	router.PathPrefix("/chat/").Handler(http.StripPrefix("/chat/", fs))
-	
-	router.HandleFunc("/registration", user.Registration)
+	router.PathPrefix("/globalChat/").Handler(http.StripPrefix("/globalChat/", http.FileServer(http.Dir("./resource/globalChat"))))
+	router.HandleFunc("/chat/{user_name:[^.]+}", socket.PersonalChat)
+
+	router.HandleFunc("/registration", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./resource/registration/index.html")
+	})
+	router.HandleFunc("/register", user.Registration).Methods(http.MethodPost)
 	router.HandleFunc("/ws", socket.GlobalChat)
 	router.HandleFunc("/history", socket.GlobalHistory)
 	router.HandleFunc("/chat", redirect)
 	router.HandleFunc("/", redirect)
-	router.HandleFunc("/chat/{user_name}", socket.PersonalChat)
 
 	fmt.Println("Запуск сервера на localhost:8080")
 	if err := http.ListenAndServe(":8080", router); err != nil {

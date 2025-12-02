@@ -6,7 +6,8 @@ if (!userId) {
 
 document.getElementById("userName").innerText = userId;
 
-const IP = "10.136.119.49";
+// const IP = "10.136.119.49";
+const IP = "192.168.0.19";
 
 const socket = new WebSocket(`ws://${IP}:8080/ws`);
 const messages = document.getElementById("messages");

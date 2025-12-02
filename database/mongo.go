@@ -12,7 +12,9 @@ import (
 
 var MongoClient *mongo.Client
 
-// ConnectDB устанавливает соединение с MongoDB.
+const DBNAME = "webMessenger"
+
+// Устанавливает соединение с БД.
 func ConnectDB() {
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -34,6 +36,10 @@ func ConnectDB() {
 }
 
 // GetCollection возвращает коллекцию из базы данных.
-func GetCollection(dbName, collectionName string) *mongo.Collection {
-	return MongoClient.Database(dbName).Collection(collectionName)
+func GetCollection(collectionName string) *mongo.Collection {
+	return MongoClient.Database(DBNAME).Collection(collectionName)
 }
+
+/* func GetCollection(dbName, collectionName string) *mongo.Collection {
+	return MongoClient.Database(dbName).Collection(collectionName)
+} */
