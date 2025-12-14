@@ -15,50 +15,50 @@
 body {
 	display: flex;
 	max-height: 100vh;
-	background-color: #f2f2f2;
+	background-color: #dae1e9;
 }
 
 /* Стили боковой панели */
 .sidebar {
 	width: 250px;
-	background: #04BF9D;
-	color: #f2f2f2;
+	background: #124e82;
+	color: #dae1e9;
 	transition: all 0.3s ease;
-	box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+	box-shadow: 10px 0 1rem rgba(0, 0, 0, 0.2);
 	display: flex;
 	flex-direction: column;
 	max-height: 100vh;
 }
 
 .sidebar-header {
-	padding: 20px;
+	padding: 1rem 5px;
 	text-align: center;
-	border-bottom: 2px solid #f2f2f2;
+	border-bottom: 2px solid #90a5ba;
 }
 
 .sidebar-header h2 {
-	font-size: 1.5rem;
+	font-size: 1.3rem;
 	margin-bottom: 5px;
 }
 
 .search {
 	display: flex;
 	align-items: center;
-	border-bottom: 2px solid #f2f2f2;;
+	border-bottom: 2px solid #90a5ba;
 }
 
 #searchInput {
-	background-color: #027368;
-	color: #f2f2f2;
+	background-color: #5b7baa;
+	color: #e3e8ed;
 	border: none;
 	max-width: 100%;
-	margin: 5px 7px;
+	margin: 10px 7px;
 	border-radius: 17px;
 	text-align: start;
 }
 
 #searchInput::placeholder {
-	color: #f2f2f2;
+	color: #e3e8ed;
 	text-align: start;
 }
 
@@ -78,24 +78,24 @@ body {
 	display: flex;
 	align-items: center;
 	padding: 12px 20px;
-	color: #f2f2f2;
+	color: #dae1e9;
 	text-decoration: none;
 	border-left: 3px solid transparent;
 }
 
 .sidebar-menu a:hover {
-	background-color: #027368ab;
-	border-left: 4px solid #F2B33D;
+	background-color: #5b7baabe;
+	border-left: 4px solid #90a5ba;
 }
 
 .sidebar-menu a.active {
-	background-color: #02736855;
-	border-left: 3px solid #F2B33D;
+	background-color: #5b7baa55;
+	border-left: 3px solid #90a5ba;
 }
 
 .sidebar-footer {
 	padding: 15px;
-	border-top: 2px solid #f2f2f2;
+	border-top: 2px solid #90a5ba;
 	text-align: center;
 	font-size: 0.8rem;
 	opacity: 0.7;
@@ -123,7 +123,7 @@ body {
 	border-radius: 18px;
 	padding: 5px 7px;
 	word-wrap: break-word;
-	color: #f2f2f2;
+	color: #dae1e9;
 	font-size: large;
 	font-weight: bold;
 }
@@ -150,7 +150,7 @@ body {
 
 input {
 	padding: 10px;
-	border: 1px solid #ccc;
+	border: 2px solid #aebecd;
 	border-radius: 5px;
 	font-size: 16px;
 	text-align: center;
@@ -160,8 +160,8 @@ input {
 }
 
 input:focus-visible {
-	border-color: #F2B33D;
-	outline: 2px solid #F2B33D;
+	border-color: #aebecd;
+	outline: 2px solid #aebecd;
 }
 
 /* Адаптивность */
