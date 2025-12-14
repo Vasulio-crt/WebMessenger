@@ -1,9 +1,3 @@
-let userName = localStorage.getItem("userName");
-if (!userName) {
-	// window.location.href =`http://${window.location.host}/login`;
-	window.location.href =`http://${window.location.host}/registration`;
-}
-
 document.getElementById("userName").innerText = userName;
 
 const socket = new WebSocket(`ws://${window.location.host}/ws`);

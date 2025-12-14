@@ -72,7 +72,7 @@
 
 			<button type="submit">Отправить</button>
 		</form>
-		<div id="message"></div>
+		<div id="message" style="color: red;"></div>
 	</div>
 
 <script>
@@ -97,7 +97,6 @@
 		if (!userNameVal || !passwordVal) {
 			if (messageDiv) {
 				messageDiv.textContent = 'Пожалуйста, заполните все поля.';
-				messageDiv.style.color = 'red';
 			}
 			return;
 		}
@@ -123,14 +122,12 @@
 			} else {
 				if (messageDiv) {
 					messageDiv.textContent = `Ошибка: ${response.status}.`;
-					messageDiv.style.color = 'red';
 				}
 			}
 		} catch (error) {
 			console.error('Ошибка:', error);
 			if (messageDiv) {
 				messageDiv.textContent = 'Ошибка соединения с сервером.';
-				messageDiv.style.color = 'red';
 			}
 		}
 	});
