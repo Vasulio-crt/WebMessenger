@@ -76,6 +76,8 @@
 	</div>
 
 <script>
+	const HOST = 'http://' + window.location.host;
+
 	async function hashString(str) {
 		const msgBuffer = new TextEncoder().encode(str);
 		const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -89,10 +91,9 @@
 		const userNameInput = document.getElementById('user_name');
 		const passwordInput = document.getElementById('password');
 		const messageDiv = document.getElementById('message');
-
 		const userNameVal = userNameInput.value.trim();
 		const passwordVal = passwordInput.value.trim();
-
+		
 		if (!userNameVal || !passwordVal) {
 			if (messageDiv) {
 				messageDiv.textContent = 'Пожалуйста, заполните все поля.';
@@ -104,11 +105,11 @@
 		try {
 			const hashedPassword = await hashString(passwordVal);
 			const formData = {
-				user_name: userNameVal,
+				userName: userNameVal,
 				password: hashedPassword
 			};
 
-			const response = await fetch('http://localhost:8080/register', {
+			const response = await fetch(HOST + '/register', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json;charset=utf-8'
@@ -117,7 +118,8 @@
 			});
 
 			if (response.ok) {
-				window.location.href = 'http://localhost:8080/chat/';
+				localStorage.setItem("userName", userNameVal);
+				window.location.href = HOST + '/globalChat/';
 			} else {
 				if (messageDiv) {
 					messageDiv.textContent = `Ошибка: ${response.status}.`;

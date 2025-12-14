@@ -1,15 +1,12 @@
-let userId = localStorage.getItem("userId");
-if (!userId) {
-	userId = "user-" + Math.random().toString(16).slice(2);
-	localStorage.setItem("userId", userId);
+let userName = localStorage.getItem("userName");
+if (!userName) {
+	// window.location.href =`http://${window.location.host}/login`;
+	window.location.href =`http://${window.location.host}/registration`;
 }
 
-document.getElementById("userName").innerText = userId;
+document.getElementById("userName").innerText = userName;
 
-// const IP = "10.136.119.49";
-const IP = "192.168.0.19";
-
-const socket = new WebSocket(`ws://${IP}:8080/ws`);
+const socket = new WebSocket(`ws://${window.location.host}/ws`);
 const messages = document.getElementById("messages");
 const messageInput = document.getElementById("messageInput");
 
@@ -17,13 +14,15 @@ function displayMessage(data) {
 	const message = document.createElement("li");
 	try {
 		const parsedData = JSON.parse(data);
-		message.textContent = parsedData.text;
 
-		if (parsedData.senderId === userId) {
+		if (parsedData.from === userName) {
+			message.textContent = parsedData.text;
 			message.classList.add("sent-mes");
-		} else if(parsedData.senderId === "server") {
+		} else if(parsedData.from === "server") {
+			message.textContent = parsedData.text;
 			message.classList.add("server-mes");
 		} else {
+			message.textContent = `${parsedData.from}: ${parsedData.text}`;
 			message.classList.add("received-mes");
 		}
 	} catch (e) {
@@ -62,7 +61,7 @@ messageInput.addEventListener("keydown", function(event) {
 		const messageText = messageInput.value.trim();
 		if (messageText !== "") {
 			const messagePayload = JSON.stringify({
-				senderId: userId,
+				from: userName,
 				text: messageText
 			});
 			socket.send(messagePayload);

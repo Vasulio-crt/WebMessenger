@@ -1,69 +1,69 @@
-package socket
+package chats
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"sync"
 	"webMessenger/database"
+	"webMessenger/user"
 
 	"github.com/gorilla/websocket"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
+type MessageGlobal struct {
+	From string `json:"from"`
+	Text string `json:"text"`
 }
 
-type Message struct {
-	SenderID  string    `json:"senderId"`
-	Text      string    `json:"text"`
-}
-
-const maxMessageLength int = 500 * 2
-
-var clients = make(map[*websocket.Conn]bool)
-var clientsMutex = sync.Mutex{}
+var clients = make(map[*websocket.Conn]string)
+var clientsMutex sync.Mutex
 
 func GlobalChat(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("session")
+	if err != nil {
+		http.Redirect(w, r, "/registration", http.StatusFound)
+		return
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println("Error while upgrading connection:", err)
-		return
+		log.Fatalln("Error GlobalChat: ", err)
 	}
 	defer conn.Close()
 
+	userName, err := user.Get_user_name(r, cookie)
+	if err != nil {
+		http.Error(w, "User name not found", http.StatusInternalServerError)
+		return
+	}
+
 	clientsMutex.Lock()
-	clients[conn] = true
+	clients[conn] = userName
 	clientsMutex.Unlock()
 
 	for {
-		_, bodyBytes, err := conn.ReadMessage()
-		if err != nil {
-			fmt.Println("Error while reading message:", err)
+		var msg MessageGlobal
+		if err := conn.ReadJSON(&msg); err != nil {
 			clientsMutex.Lock()
 			delete(clients, conn)
 			clientsMutex.Unlock()
+			log.Println("Error ReadJSON:", err)
 			break
 		}
 
-		if len(bodyBytes) == 0 {
-			fmt.Println("Received empty message, not broadcasting.")
-			continue
-		}
-
-		var msg Message
-		if err := json.Unmarshal(bodyBytes, &msg); err != nil {
-			fmt.Println("Error unmarshaling message:", err)
+		if len(msg.Text) == 0 {
 			continue
 		}
 
 		if len(msg.Text) > maxMessageLength {
-			conn.WriteMessage(websocket.TextMessage, []byte(`{"senderId":"server","text":"Your message is too long (max 500 chars)"}`))
+			msg.From = "server"
+			msg.Text = "Your message is too long (max 500 chars)"
+			conn.WriteJSON(msg)
 			continue
 		}
 
@@ -71,22 +71,23 @@ func GlobalChat(w http.ResponseWriter, r *http.Request) {
 		collection := database.GetCollection("globalMessages")
 		_, err = collection.InsertOne(context.Background(), msg)
 		if err != nil {
-			fmt.Println("Error inserting message to MongoDB:", err)
+			log.Println("Error inserting message to MongoDB:", err)
 			continue
 		}
 
-		broadcastMessage(bodyBytes)
+		msg.From = userName
+		broadcastMessage(&msg)
 	}
 }
 
-func broadcastMessage(message []byte) {
+func broadcastMessage(message *MessageGlobal) {
 	clientsMutex.Lock()
 	defer clientsMutex.Unlock()
 
 	for client := range clients {
-		err := client.WriteMessage(websocket.TextMessage, message)
+		err := client.WriteJSON(message)
 		if err != nil {
-			fmt.Println("Error while writing message:", err)
+			log.Println("Error while writing message:", err)
 			client.Close()
 			delete(clients, client)
 		}

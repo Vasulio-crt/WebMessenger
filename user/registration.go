@@ -2,20 +2,13 @@ package user
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"webMessenger/database"
-	"webMessenger/user/utilities"
 )
 
-type Session struct {
-	SessionToken string `bson:"session_token"`
-	UserName     string `bson:"user_name"`
-}
-
 type User struct {
-	UserName string `json:"user_name"`
-	Password string `json:"password"`
+	UserName string `json:"userName" bson:"userName"`
+	Password string `json:"password" bson:"password"`
 }
 
 func Registration(w http.ResponseWriter, r *http.Request) {
@@ -36,35 +29,15 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error server (db)", http.StatusInternalServerError)
 		return
 	}
-	
-	cookieValue := utilities.GenerateValueCookie()
-	if cookieValue == "" {
-		http.Error(w, "Failed to generate cookie value", http.StatusInternalServerError)
-		return
-	}
-	
-	
+
 	// Сохранение сессии в БД
-	collection = database.GetCollection("sessions")
-	session := Session{SessionToken: cookieValue, UserName: req.UserName}
-	_, err := collection.InsertOne(r.Context(), session)
+	err := create_session(w, r, req.UserName)
 	if err != nil {
-		http.Error(w, "Failed to save session", http.StatusInternalServerError)
-		fmt.Println("Error inserting session to MongoDB:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	cookie := &http.Cookie{
-		Name:     "session",
-		Value:    cookieValue,
-		Path:     "/",
-		HttpOnly: true, // Доступ только через HTTP, защита от XSS
-		//Secure:   true, // Только HTTPS
-		SameSite: http.SameSiteStrictMode, // Защита от CSRF
-	}
-	http.SetCookie(w, cookie)
-
-	// TODO: сделать redirect
+	// redirect на фронте
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {

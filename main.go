@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"webMessenger/database"
-	"webMessenger/socket"
+	"webMessenger/chats"
 	"webMessenger/user"
 
 	"github.com/gorilla/mux"
@@ -45,14 +45,14 @@ func main() {
 	router := mux.NewRouter()
 
 	router.PathPrefix("/globalChat/").Handler(http.StripPrefix("/globalChat/", http.FileServer(http.Dir("./resource/globalChat"))))
-	router.HandleFunc("/chat/{user_name:[^.]+}", socket.PersonalChat)
+	router.HandleFunc("/chat/{userName:[^.]+}", chats.PersonalChat)
 
 	router.HandleFunc("/registration", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./resource/registration/index.html")
 	})
 	router.HandleFunc("/register", user.Registration).Methods(http.MethodPost)
-	router.HandleFunc("/ws", socket.GlobalChat)
-	router.HandleFunc("/history", socket.GlobalHistory)
+	router.HandleFunc("/ws", chats.GlobalChat)
+	router.HandleFunc("/history", chats.GlobalHistory)
 	router.HandleFunc("/chat", redirect)
 	router.HandleFunc("/", redirect)
 
