@@ -1,28 +1,31 @@
 package chats
 
 import (
+	"context"
 	"log"
 	"sync"
+	"time"
+	"webMessenger/database"
+	"webMessenger/user/utilities"
 
 	"github.com/gorilla/websocket"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Client struct {
-	ID   string
+	Name string
 	Conn *websocket.Conn
-	mu sync.Mutex 
 }
 
 func (c *Client) SendMessage(msg Message) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	return c.Conn.WriteJSON(msg)
 }
 
 // ------- Hub -------
 type Hub struct {
 	clients map[string]*Client
-	mu sync.RWMutex
+	mu      sync.RWMutex
 }
 
 func newHub() *Hub {
@@ -34,8 +37,8 @@ func newHub() *Hub {
 func (h *Hub) AddClient(c *Client) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	h.clients[c.ID] = c
-	log.Printf("Пользователь подключен: %s", c.ID)
+	h.clients[c.Name] = c
+	log.Printf("Пользователь подключен: %s", c.Name)
 }
 
 func (h *Hub) RemoveClient(id string) {
@@ -48,21 +51,52 @@ func (h *Hub) RemoveClient(id string) {
 	}
 }
 
-// SendPrivateMessage ищет получателя и пишет ему напрямую
+// SendPrivateMessage ищет получателя и пишет ему
 func (h *Hub) SendPrivateMessage(msg Message) {
-	// Берем RLock (блокировка на чтение), чтобы найти клиента
+	collectionInfo := database.GetCollectionHistory("info")
+	filter := bson.M{
+		"users": bson.M{
+			"$all": bson.A{msg.From, msg.To},
+		},
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var info Info
+	var hashChat string
+	if err := collectionInfo.FindOne(ctx, filter).Decode(&info); err != nil {
+		if err == mongo.ErrNoDocuments {
+			hashChat = utilities.HashString(msg.From + msg.To)
+			_, err = collectionInfo.InsertOne(ctx, bson.M{"users": bson.A{msg.From, msg.To}, "chatName": hashChat})
+			if err != nil {
+				log.Println("Error inserting message to MongoDB:", err)
+				return
+			}
+		}
+		log.Fatal(err)
+	} else {
+		hashChat = info.ChatName
+	}
+
 	h.mu.RLock()
 	recipient, ok := h.clients[msg.To]
-	h.mu.RUnlock() 
+	h.mu.RUnlock()
 
 	if ok {
 		err := recipient.SendMessage(msg)
 		if err != nil {
 			log.Printf("Ошибка отправки пользователю %s: %v", msg.To, err)
-			// Если ошибка записи, удаляем клиента
-			h.RemoveClient(recipient.ID)
+			h.RemoveClient(recipient.Name)
 		}
 	} else {
-		log.Printf("Пользователь %s не найден", msg.To)
+		collection := database.GetCollection(hashChat)
+		msgHistory := MessageHistory{
+			From: msg.From,
+			Text: msg.Text,
+		}
+		if _, err := collection.InsertOne(ctx, msgHistory); err != nil {
+			log.Println("Error inserting message to MongoDB:", err)
+			return
+		}
 	}
 }

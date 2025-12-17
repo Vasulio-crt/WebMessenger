@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"webMessenger/database"
 	"webMessenger/chats"
+	"webMessenger/database"
 	"webMessenger/user"
 
 	"github.com/gorilla/mux"
 )
 
 func redirect(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/globalChat/", http.StatusPermanentRedirect)
+	http.Redirect(w, r, "/globalChat", http.StatusPermanentRedirect)
 }
 
 /* func authMiddleware(next http.Handler) http.Handler {
@@ -41,16 +41,20 @@ func main() {
 			panic(err)
 		}
 	}()
+	FS := http.FileServer(http.Dir("resource/"))
 
 	router := mux.NewRouter()
+	router.PathPrefix("/resource/").Handler(http.StripPrefix("/resource/", FS))
 
-	router.PathPrefix("/globalChat/").Handler(http.StripPrefix("/globalChat/", http.FileServer(http.Dir("./resource/globalChat"))))
-	router.HandleFunc("/chat/{userName:[^.]+}", chats.PersonalChat)
+	// PersonalChat
+	router.HandleFunc("/chat/{userName:[^.]+}", chats.GetChat)
+	// router.HandleFunc("/wsp", chats.PersonalChat)
 
-	router.HandleFunc("/registration", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./resource/registration/index.html")
-	})
+	router.HandleFunc("/registration", user.GetRegistration)
 	router.HandleFunc("/register", user.Registration).Methods(http.MethodPost)
+	
+	// GlobalChat
+	router.HandleFunc("/globalChat", chats.GetGlobalChat)
 	router.HandleFunc("/ws", chats.GlobalChat)
 	router.HandleFunc("/history", chats.GlobalHistory)
 	router.HandleFunc("/chat", redirect)

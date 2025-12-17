@@ -13,6 +13,7 @@ import (
 var MongoClient *mongo.Client
 
 const DBNAME = "webMessenger"
+const DBNAME_HISTORY = "personalHistory"
 
 // Устанавливает соединение с БД.
 func ConnectDB() {
@@ -35,7 +36,12 @@ func ConnectDB() {
 	fmt.Println("Connected to MongoDB!")
 }
 
-// GetCollection возвращает коллекцию из базы данных.
+// GetCollection возвращает коллекцию из базы данных DBNAME.
 func GetCollection(collectionName string) *mongo.Collection {
 	return MongoClient.Database(DBNAME).Collection(collectionName)
+}
+
+// GetCollectionHistory возвращает коллекцию из базы данных DBNAME_HISTORY
+func GetCollectionHistory(collectionName string) *mongo.Collection {
+	return MongoClient.Database(DBNAME_HISTORY).Collection(collectionName)
 }

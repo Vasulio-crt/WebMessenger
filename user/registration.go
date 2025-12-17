@@ -11,6 +11,14 @@ type User struct {
 	Password string `json:"password" bson:"password"`
 }
 
+func (u User) IsNull() bool {
+	return u.UserName == "" || u.Password == ""
+}
+
+func GetRegistration(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./pages/registration.html")
+}
+
 func Registration(w http.ResponseWriter, r *http.Request) {
 	var req User
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -41,7 +49,7 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-
+	// Сделать
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
@@ -52,4 +60,6 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		MaxAge: -1,
 	}
 	http.SetCookie(w, cookie)
+
+	// Сделать
 }

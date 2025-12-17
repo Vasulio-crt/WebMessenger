@@ -23,6 +23,10 @@ type MessageGlobal struct {
 var clients = make(map[*websocket.Conn]string)
 var clientsMutex sync.Mutex
 
+func GetGlobalChat(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./pages/globalChat.html")
+}
+
 func GlobalChat(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")
 	if err != nil {
@@ -69,7 +73,7 @@ func GlobalChat(w http.ResponseWriter, r *http.Request) {
 
 		// Сохранение сообщения в БД
 		collection := database.GetCollection("globalMessages")
-		_, err = collection.InsertOne(context.Background(), msg)
+		_, err = collection.InsertOne(context.TODO(), msg)
 		if err != nil {
 			log.Println("Error inserting message to MongoDB:", err)
 			continue
