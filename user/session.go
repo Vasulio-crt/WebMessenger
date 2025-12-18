@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"webMessenger/database"
@@ -16,6 +17,8 @@ type Session struct {
 
 const collectionName = "sessions"
 
+var AllSessions map[string]string
+
 func create_session(w http.ResponseWriter, r *http.Request, userName string) error  {
 	cookieValue := utilities.GenerateValueCookie()
 	if cookieValue == "" {
@@ -24,6 +27,7 @@ func create_session(w http.ResponseWriter, r *http.Request, userName string) err
 
 	collection := database.GetCollection(collectionName)
 	session := Session{SessionToken: cookieValue, UserName: userName}
+	AllSessions[cookieValue] = userName
 	_, err := collection.InsertOne(r.Context(), session)
 	if err != nil {
 		return errors.New("failed to save session")
@@ -41,6 +45,11 @@ func create_session(w http.ResponseWriter, r *http.Request, userName string) err
 }
 
 func Get_user_name(r *http.Request, cookie *http.Cookie) (string, error) {
+	userName, ok := AllSessions[cookie.Value]
+	if ok {
+		return userName, nil
+	}
+	
 	var session Session
 	collection := database.GetCollection(collectionName)
 	err := collection.FindOne(r.Context(), bson.D{{Key: "sessionToken", Value: cookie.Value}}).Decode(&session)
@@ -49,4 +58,14 @@ func Get_user_name(r *http.Request, cookie *http.Cookie) (string, error) {
 	}
 
 	return session.UserName, nil
+}
+
+func delete_session(cookie *http.Cookie) error {
+	delete(AllSessions, cookie.Value)
+	collection := database.GetCollection(collectionName)
+	_, err := collection.DeleteOne(context.TODO(), bson.D{{Key: "sessionToken", Value: cookie.Value}})
+	if err != nil {
+		return errors.New("failed delete session")
+	}
+	return nil
 }

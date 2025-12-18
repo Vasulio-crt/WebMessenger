@@ -5,8 +5,11 @@ import (
 	"encoding/base64"
 	"fmt"
 	"hash/fnv"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
+// GenerateValueCookie возвращает случайно сгенерированную сроку в base64
 func GenerateValueCookie() string  {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
@@ -26,4 +29,16 @@ func HashString(s string) string {
 		return ""
 	}
 	return fmt.Sprintf("%x", hash.Sum64())
+}
+
+// HashPassword создает хеш пароля.
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
+}
+
+// CheckPasswordHash сравнивает пароль с его хешем.
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }

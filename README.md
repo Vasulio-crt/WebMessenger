@@ -17,5 +17,6 @@ go mod tidy
 
 ## для себя
 ```bash
-docker run -p 27017:27017 mongodb/mongodb-community-server:latest
+docker volume create mongo_data
+docker run -p 27017:27017 -v mongo_data:/data/db mongodb/mongodb-community-server:latest
 ```

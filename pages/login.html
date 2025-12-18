@@ -4,13 +4,12 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="icon" href="/resource/favicon.png">
-	<title>Регистрация</title>
+	<title>Вход</title>
 	<link rel="stylesheet" href="/resource/css/reg-style.css">
-</head>
 <body>
 	<div class="login-container">
-		<h2 style="text-align: center;">Регистрация</h2>
-		<form id="registerForm">
+		<h2 style="text-align: center;">Вход</h2>
+		<form id="loginForm">
 			<div class="form-group">
 				<label for="user_name">Имя пользователя</label>
 				<input type="text" id="user_name" name="user_name" required maxlength="32">
@@ -21,17 +20,16 @@
 				<input type="password" id="password" name="password" required maxlength="32">
 			</div>
 
-			<button type="submit">Зарегистрироваться</button>
+			<button type="submit">Войти</button>
 		</form>
 		<div id="message" style="color: red;"></div>
 		<p style="text-align: center; margin-top: 15px;">
-			Есть аккаунт? <a href="/login">Войти</a>
+			Нет аккаунта? <a href="/registration">Зарегистрироваться</a>
 		</p>
 	</div>
 	<script src="/resource/js/auth.js"></script>
 	<script>
-		setupAuthForm('registerForm', '/register', '/globalChat');
+		setupAuthForm('loginForm', '/login', '/globalChat');
 	</script>
-
 </body>
 </html>

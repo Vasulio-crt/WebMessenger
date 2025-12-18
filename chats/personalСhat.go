@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"webMessenger/database"
 	"webMessenger/user"
 
@@ -23,13 +22,7 @@ func GetChat(w http.ResponseWriter, r *http.Request) {
 	err := collection.FindOne(r.Context(), bson.D{{Key: "userName", Value: user_name}}).Decode(&user)
 	fmt.Println("user:", user, user.IsNull())
 	if err != nil || user.IsNull() {
-		htmlContent, err := os.ReadFile("./pages/UserNotFound.html")
-		if err != nil {
-			http.Error(w, "Не удалось прочитать файл", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(htmlContent)
+		http.ServeFile(w, r, "./pages/UserNotFound.html")
 		return
 	}
 

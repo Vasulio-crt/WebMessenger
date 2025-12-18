@@ -15,6 +15,10 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/globalChat", http.StatusPermanentRedirect)
 }
 
+/* func HttpErrorPage(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./pages/ErrorPage.html")
+} */
+
 /* func authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("session")
@@ -50,8 +54,10 @@ func main() {
 	router.HandleFunc("/chat/{userName:[^.]+}", chats.GetChat)
 	// router.HandleFunc("/wsp", chats.PersonalChat)
 
-	router.HandleFunc("/registration", user.GetRegistration)
+	router.HandleFunc("/registration", user.GetRegistration).Methods(http.MethodGet)
+	router.HandleFunc("/login", user.GetLogin).Methods(http.MethodGet)
 	router.HandleFunc("/register", user.Registration).Methods(http.MethodPost)
+	router.HandleFunc("/login", user.Login).Methods(http.MethodPost)
 	
 	// GlobalChat
 	router.HandleFunc("/globalChat", chats.GetGlobalChat)
