@@ -18,7 +18,7 @@ type Client struct {
 	Conn *websocket.Conn
 }
 
-func (c *Client) SendMessage(msg Message) error {
+func (c *Client) SendMessage(msg MessageFromTo) error {
 	return c.Conn.WriteJSON(msg)
 }
 
@@ -52,7 +52,7 @@ func (h *Hub) RemoveClient(id string) {
 }
 
 // SendPrivateMessage ищет получателя и пишет ему
-func (h *Hub) SendPrivateMessage(msg Message) {
+func (h *Hub) SendPrivateMessage(msg MessageFromTo) {
 	collectionInfo := database.GetCollectionHistory("info")
 	filter := bson.M{
 		"users": bson.M{
@@ -90,7 +90,7 @@ func (h *Hub) SendPrivateMessage(msg Message) {
 		}
 	} else {
 		collection := database.GetCollection(hashChat)
-		msgHistory := MessageHistory{
+		msgHistory := Message{
 			From: msg.From,
 			Text: msg.Text,
 		}

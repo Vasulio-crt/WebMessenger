@@ -11,8 +11,7 @@
 	<script>
 		let userName = localStorage.getItem("userName");
 		if (!userName) {
-			// window.location.href =`http://${window.location.host}/login`;
-			window.location.href =`http://${window.location.host}/registration`;
+			window.location.href =`http://${window.location.host}/login`;
 		}
 	</script>
 	<!-- Боковая панель -->
@@ -23,29 +22,16 @@
 		</div>
 		
 		<div class="search">
-			<input id="searchInput" maxlength="100" type="text" placeholder="Search"/>
+			<input id="searchInput" maxlength="100" type="text" placeholder="Найти пользователя"/>
+			<button id="searchButton">🔍</button>
 		</div>
 
 		<nav class="sidebar-menu">
-			<ul>
-				<li><a href="/chat" class="active">GLOBAL CHAT</a></li>
-				<li><a href="/chat/human_1">human 1</a></li>
-				<li><a href="#">human 2</a></li>
-				<li><a href="#">human 3</a></li>
-				<li><a href="#">human 4</a></li>
-				<li><a href="#">human 5</a></li>
-				<li><a href="#">human 6</a></li>
-				<li><a href="#">human 7</a></li>
-				<li><a href="#">human 8</a></li>
-				<li><a href="#">human 9</a></li>
-				<li><a href="#">human 9</a></li>
-				<li><a href="#">human 9</a></li>
-				<li><a href="#">human 9</a></li>
-			</ul>
+			<ul id="chatList"></ul>
 		</nav>
 		
 		<div class="sidebar-footer">
-			&copy; 2025 WebMessenger
+			&copy; 2025 WebMessenger Облачко
 		</div>
 	</div>
 
@@ -57,5 +43,6 @@
 	</main>
 
 	<script src="/resource/js/script.js"></script>
+	<script src="/resource/js/loadPages.js"></script>
 </body>
 </html>

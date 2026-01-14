@@ -15,22 +15,22 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type MessageGlobal struct {
-	From string `json:"from"`
-	Text string `json:"text"`
-}
-
 var clients = make(map[*websocket.Conn]string)
 var clientsMutex sync.Mutex
 
 func GetGlobalChat(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "./pages/globalChat.html")
+	_, err := r.Cookie("session")
+	if err != nil {
+		http.Redirect(w, r, "/registration", http.StatusFound)
+		return
+	}
+
+	http.ServeFile(w, r, "./pages/chat.html")
 }
 
 func GlobalChat(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")
-	if err != nil {
-		http.Redirect(w, r, "/registration", http.StatusFound)
+	if err == http.ErrNoCookie {
 		return
 	}
 
@@ -51,7 +51,7 @@ func GlobalChat(w http.ResponseWriter, r *http.Request) {
 	clientsMutex.Unlock()
 
 	for {
-		var msg MessageGlobal
+		var msg Message
 		if err := conn.ReadJSON(&msg); err != nil {
 			clientsMutex.Lock()
 			delete(clients, conn)
@@ -84,7 +84,7 @@ func GlobalChat(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func broadcastMessage(message *MessageGlobal) {
+func broadcastMessage(message *Message) {
 	clientsMutex.Lock()
 	defer clientsMutex.Unlock()
 
@@ -101,11 +101,7 @@ func broadcastMessage(message *MessageGlobal) {
 func GlobalHistory(w http.ResponseWriter, r *http.Request) {
 	collection := database.GetCollection("globalMessages")
 
-	findOptions := options.Find()
-	findOptions.SetSort(bson.D{{Key: "_id", Value: -1}})
-	findOptions.SetLimit(50)
-
-	cursor, err := collection.Find(r.Context(), bson.D{}, findOptions)
+	cursor, err := collection.Find(r.Context(), bson.D{}, options.Find().SetLimit(50))
 	if err != nil {
 		http.Error(w, "Failed to retrieve message history", http.StatusInternalServerError)
 		fmt.Println("Error finding messages in MongoDB:", err)
@@ -113,13 +109,13 @@ func GlobalHistory(w http.ResponseWriter, r *http.Request) {
 	}
 	defer cursor.Close(r.Context())
 
-	var messageHistory []Message
-	if err = cursor.All(r.Context(), &messageHistory); err != nil {
+	var chatHistory []Message
+	if err = cursor.All(r.Context(), &chatHistory); err != nil {
 		http.Error(w, "Failed to decode message history", http.StatusInternalServerError)
 		fmt.Println("Error decoding messages from MongoDB:", err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(messageHistory)
+	json.NewEncoder(w).Encode(chatHistory)
 }

@@ -1,7 +1,7 @@
 package chats
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
 	"webMessenger/database"
@@ -14,28 +14,44 @@ import (
 
 func GetChat(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	fmt.Println("vars:", vars)
-
-	user_name := vars["userName"]
+	userName := vars["userName"]
 	collection := database.GetCollection("users")
 	var user user.User
-	err := collection.FindOne(r.Context(), bson.D{{Key: "userName", Value: user_name}}).Decode(&user)
-	fmt.Println("user:", user, user.IsNull())
-	if err != nil || user.IsNull() {
+	err := collection.FindOne(r.Context(), bson.D{{Key: "userName", Value: userName}}).Decode(&user)
+	if err != nil {
 		http.ServeFile(w, r, "./pages/UserNotFound.html")
 		return
 	}
 
-	// Если пользователь найден, здесь должна быть логика для отображения чата.
-	// Например, http.ServeFile(w, r, "./pages/personalChat.html")
+	http.ServeFile(w, r, "./pages/chat.html")
+}
+
+func FindChat(w http.ResponseWriter, r *http.Request)  {
+	vars := mux.Vars(r)
+	userName := vars["userName"]
+	collection := database.GetCollection("users")
+	var user user.User
+	err := collection.FindOne(r.Context(), bson.D{{Key: "userName", Value: userName}}).Decode(&user)
+	response := make(map[string]bool, 1)
+
+	if err == nil && !user.IsNull() {
+		response["found"] = true
+	} else {
+		response["found"] = false
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func PersonalHistory(w http.ResponseWriter, r *http.Request){
+
 }
 
 var hub = newHub()
 
 func PersonalChat(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")
-	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusFound)
+	if err == http.ErrNoCookie {
 		return
 	}
 
@@ -59,7 +75,7 @@ func PersonalChat(w http.ResponseWriter, r *http.Request) {
 	defer hub.RemoveClient(client.Name)
 
 	for {
-		var msg Message
+		var msg MessageFromTo
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {

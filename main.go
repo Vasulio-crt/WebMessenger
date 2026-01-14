@@ -30,7 +30,6 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Bad request", http.StatusBadRequest)
 			return
 		}
-
 		// TODO: Проверить значение cookie в базе данных
 		_ = cookie.Value
 
@@ -51,14 +50,16 @@ func main() {
 	router.PathPrefix("/resource/").Handler(http.StripPrefix("/resource/", FS))
 
 	// PersonalChat
-	router.HandleFunc("/chat/{userName:[^.]+}", chats.GetChat)
+	router.HandleFunc("/chat/{userName}", chats.GetChat)
+	router.HandleFunc("/chat/find/{userName}", chats.FindChat)
+	router.HandleFunc("/chat/{userName}/history", chats.GetChat)
 	// router.HandleFunc("/wsp", chats.PersonalChat)
 
 	router.HandleFunc("/registration", user.GetRegistration).Methods(http.MethodGet)
 	router.HandleFunc("/login", user.GetLogin).Methods(http.MethodGet)
 	router.HandleFunc("/register", user.Registration).Methods(http.MethodPost)
 	router.HandleFunc("/login", user.Login).Methods(http.MethodPost)
-	
+
 	// GlobalChat
 	router.HandleFunc("/globalChat", chats.GetGlobalChat)
 	router.HandleFunc("/ws", chats.GlobalChat)

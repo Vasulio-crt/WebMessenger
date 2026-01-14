@@ -16,12 +16,12 @@ const maxMessageLength int = 500
 
 type Message struct {
 	From string `json:"from"`
-	To   string `json:"to"`
 	Text string `json:"text"`
 }
 
-type MessageHistory struct {
+type MessageFromTo struct {
 	From string `json:"from"`
+	To   string `json:"to"`
 	Text string `json:"text"`
 }
 

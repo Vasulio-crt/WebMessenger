@@ -17,7 +17,7 @@ type Session struct {
 
 const collectionName = "sessions"
 
-var AllSessions map[string]string
+var AllSessions = make(map[string]string)
 
 func create_session(w http.ResponseWriter, r *http.Request, userName string) error  {
 	cookieValue := utilities.GenerateValueCookie()
