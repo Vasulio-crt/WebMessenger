@@ -44,6 +44,9 @@ func main() {
 			panic(err)
 		}
 	}()
+	if err := user.Init_sessions(); err != nil {
+		panic(err)
+	}
 	FS := http.FileServer(http.Dir("resource/"))
 
 	router := mux.NewRouter()
@@ -53,16 +56,17 @@ func main() {
 	router.HandleFunc("/chat/{userName}", chats.GetChat)
 	router.HandleFunc("/chat/find/{userName}", chats.FindChat)
 	router.HandleFunc("/chat/{userName}/history", chats.GetChat)
-	// router.HandleFunc("/wsp", chats.PersonalChat)
+	// router.HandleFunc("/chat/{userName}/ws", chats.PersonalChatWS)
 
 	router.HandleFunc("/registration", user.GetRegistration).Methods(http.MethodGet)
 	router.HandleFunc("/login", user.GetLogin).Methods(http.MethodGet)
 	router.HandleFunc("/register", user.Registration).Methods(http.MethodPost)
 	router.HandleFunc("/login", user.Login).Methods(http.MethodPost)
+	router.HandleFunc("/logout", user.Logout).Methods(http.MethodPost)
 
 	// GlobalChat
 	router.HandleFunc("/globalChat", chats.GetGlobalChat)
-	router.HandleFunc("/ws", chats.GlobalChat)
+	router.HandleFunc("/ws", chats.GlobalChatWS)
 	router.HandleFunc("/history", chats.GlobalHistory)
 	router.HandleFunc("/chat", redirect)
 	router.HandleFunc("/", redirect)

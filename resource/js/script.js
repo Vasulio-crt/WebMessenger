@@ -1,4 +1,7 @@
-document.getElementById("userName").innerText = userName;
+const userNameElement = document.getElementById("userName");
+if (userNameElement) {
+	userNameElement.innerText = userName;
+}
 
 const socket = new WebSocket(`ws://${window.location.host}/ws`);
 const messages = document.getElementById("messages");

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 	"sync"
 	"webMessenger/database"
 	"webMessenger/user"
@@ -15,22 +16,23 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var clients = make(map[*websocket.Conn]string)
+var clients = make([]*websocket.Conn, 0)
 var clientsMutex sync.Mutex
 
 func GetGlobalChat(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("session")
-	if err != nil {
-		http.Redirect(w, r, "/registration", http.StatusFound)
+	cookie, err := r.Cookie("session")
+	if err != nil || !user.Session_check(cookie){
+		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
 
 	http.ServeFile(w, r, "./pages/chat.html")
 }
 
-func GlobalChat(w http.ResponseWriter, r *http.Request) {
+func GlobalChatWS(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")
 	if err == http.ErrNoCookie {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -39,6 +41,9 @@ func GlobalChat(w http.ResponseWriter, r *http.Request) {
 		log.Fatalln("Error GlobalChat: ", err)
 	}
 	defer conn.Close()
+	clientsMutex.Lock()
+	clients = append(clients, conn)
+	clientsMutex.Unlock()
 
 	userName, err := user.Get_user_name(r, cookie)
 	if err != nil {
@@ -46,15 +51,13 @@ func GlobalChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	clientsMutex.Lock()
-	clients[conn] = userName
-	clientsMutex.Unlock()
-
 	for {
 		var msg Message
 		if err := conn.ReadJSON(&msg); err != nil {
 			clientsMutex.Lock()
-			delete(clients, conn)
+			clients = slices.DeleteFunc(clients, func(c *websocket.Conn) bool {
+				return c == conn
+			})
 			clientsMutex.Unlock()
 			log.Println("Error ReadJSON:", err)
 			break
@@ -88,12 +91,12 @@ func broadcastMessage(message *Message) {
 	clientsMutex.Lock()
 	defer clientsMutex.Unlock()
 
-	for client := range clients {
+	for i, client := range clients {
 		err := client.WriteJSON(message)
 		if err != nil {
 			log.Println("Error while writing message:", err)
 			client.Close()
-			delete(clients, client)
+			clients = slices.Delete(clients, i, i+1)
 		}
 	}
 }
