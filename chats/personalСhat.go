@@ -13,11 +13,17 @@ import (
 )
 
 func GetChat(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("session")
+	if err != nil || !user.Session_check(cookie){
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
+
 	vars := mux.Vars(r)
 	userName := vars["userName"]
 	collection := database.GetCollection("users")
 	var user user.User
-	err := collection.FindOne(r.Context(), bson.D{{Key: "userName", Value: userName}}).Decode(&user)
+	err = collection.FindOne(r.Context(), bson.D{{Key: "userName", Value: userName}}).Decode(&user)
 	if err != nil {
 		http.ServeFile(w, r, "./pages/UserNotFound.html")
 		return
@@ -49,9 +55,10 @@ func PersonalHistory(w http.ResponseWriter, r *http.Request){
 
 var hub = newHub()
 
-func PersonalChat(w http.ResponseWriter, r *http.Request) {
+func PersonalChatWS(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")
 	if err == http.ErrNoCookie {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 

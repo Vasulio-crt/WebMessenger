@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			chatLink.textContent = chatName;
 
 			const deleteBtn = document.createElement("button");
-			deleteBtn.textContent = "X";
+			deleteBtn.innerHTML = `<img src="/resource/cross.svg" alt="Удалить чат" />`;
 			deleteBtn.classList.add("delete-chat-btn");
 			deleteBtn.onclick = (e) => {
 				e.preventDefault();
@@ -45,7 +45,6 @@ document.addEventListener("DOMContentLoaded", function() {
 			li.appendChild(chatLink);
 			li.appendChild(deleteBtn);
 
-			// Выделяем активный чат
 			if (window.location.pathname === `/chat/${chatName}`) {
 				li.classList.add('active');
 			}
@@ -68,7 +67,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		personalChats = personalChats.filter(name => name !== chatName);
 		savePersonalChats(personalChats);
 		renderChats();
-		// Если удалили текущий открытый чат, перенаправляем в глобальный
+
 		if (window.location.pathname === `/chat/${chatName}`) {
 			window.location.href = '/globalChat';
 		}

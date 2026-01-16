@@ -83,18 +83,21 @@ body {
 
 .sidebar-menu li {
 	margin-bottom: 3px;
+	height: 48px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between
 }
 
 .sidebar-menu a {
-	display: flex;
-	align-items: center;
+	flex: content;
 	padding: 12px 20px;
 	color: #dae1e9;
 	text-decoration: none;
 	border-left: 3px solid transparent;
 }
 
-.sidebar-menu a:hover {
+.sidebar-menu li:hover {
 	background-color: #5b7baabe;
 	border-left: 4px solid #90a5ba;
 }
@@ -104,12 +107,44 @@ body {
 	border-left: 3px solid #90a5ba;
 }
 
+.delete-chat-btn {
+	background-color: #5b7baa;
+	border-radius: 1rem;
+	border: none;
+	cursor: pointer;
+	padding: 8px;
+	margin-right: 10px;
+	visibility: hidden;
+	opacity: 0;
+	transition: opacity 0.2s ease-in-out;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.sidebar-menu li:hover .delete-chat-btn {
+	visibility: visible;
+	opacity: 1;
+}
+
+.delete-chat-btn img {
+	width: 20px;
+	height: 20px;
+}
+
 .sidebar-footer {
-	padding: 15px;
+	padding: 10px;
 	border-top: 2px solid #90a5ba;
 	text-align: center;
-	font-size: 0.8rem;
-	opacity: 0.7;
+}
+
+#logoutButton {
+	width: 80%;
+	background-color: #5b7baa;
+	color: #e3e8ed;
+	border: none;
+	border-radius: 17px;
+	cursor: pointer;
 }
 
 /* Стили основного контента */

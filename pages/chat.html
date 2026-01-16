@@ -11,7 +11,7 @@
 	<script>
 		let userName = localStorage.getItem("userName");
 		if (!userName) {
-			window.location.href =`http://${window.location.host}/login`;
+			window.location.href ='/login';
 		}
 	</script>
 	<!-- Боковая панель -->
@@ -31,7 +31,7 @@
 		</nav>
 		
 		<div class="sidebar-footer">
-			&copy; 2025 WebMessenger Облачко
+			<button id="logoutButton">Выйти из аккаунта</button>
 		</div>
 	</div>
 
@@ -44,5 +44,20 @@
 
 	<script src="/resource/js/script.js"></script>
 	<script src="/resource/js/loadPages.js"></script>
+	<script>
+		document.getElementById('logoutButton').addEventListener('click', async function() {
+			try {
+				const response = await fetch('/logout', {
+					method: 'POST',
+				});
+				localStorage.removeItem('userName');
+				if (response.ok) {
+					window.location.href = '/login';
+				}
+			} catch (error) {
+				console.error('Error sending logout request:', error);
+			}
+		});
+	</script>
 </body>
 </html>

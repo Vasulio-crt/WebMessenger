@@ -60,7 +60,7 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// redirect на фронте
+	// redirect registration.html
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -94,13 +94,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// redirect на фронте
+	// redirect login.html
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")
 	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusFound)
+		http.Error(w, "Server cookie error", http.StatusInternalServerError)
 		return
 	}
 
@@ -115,6 +115,4 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Error logout:", err)
 	}
-
-	http.Redirect(w, r, "/login", http.StatusOK)
 }
