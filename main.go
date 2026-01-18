@@ -53,11 +53,12 @@ func main() {
 	router.PathPrefix("/resource/").Handler(http.StripPrefix("/resource/", FS))
 
 	// PersonalChat
-	router.HandleFunc("/chat/{userName}", chats.GetChat)
 	router.HandleFunc("/chat/find/{userName}", chats.FindChat)
-	router.HandleFunc("/chat/{userName}/history", chats.GetChat)
-	// router.HandleFunc("/chat/{userName}/ws", chats.PersonalChatWS)
+	router.HandleFunc("/chat/{userName}/history", chats.PersonalHistory)
+	router.HandleFunc("/chat/{userName}/ws", chats.PersonalChatWS)
+	router.HandleFunc("/chat/{userName}", chats.GetChat)
 
+	// User
 	router.HandleFunc("/registration", user.GetRegistration).Methods(http.MethodGet)
 	router.HandleFunc("/login", user.GetLogin).Methods(http.MethodGet)
 	router.HandleFunc("/register", user.Registration).Methods(http.MethodPost)
@@ -66,8 +67,8 @@ func main() {
 
 	// GlobalChat
 	router.HandleFunc("/globalChat", chats.GetGlobalChat)
-	router.HandleFunc("/ws", chats.GlobalChatWS)
-	router.HandleFunc("/history", chats.GlobalHistory)
+	router.HandleFunc("/globalChat/ws", chats.GlobalChatWS)
+	router.HandleFunc("/globalChat/history", chats.GlobalHistory)
 	router.HandleFunc("/chat", redirect)
 	router.HandleFunc("/", redirect)
 

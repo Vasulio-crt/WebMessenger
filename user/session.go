@@ -65,20 +65,20 @@ func Init_sessions() error {
 	return nil
 }
 
-func Get_user_name(r *http.Request, cookie *http.Cookie) (string, error) {
+func Get_user_name(cookie *http.Cookie) string {
 	userName, ok := allSessions[cookie.Value]
 	if ok {
-		return userName, nil
+		return userName
 	}
 
 	var session Session
 	collection := database.GetCollection(collectionName)
-	err := collection.FindOne(r.Context(), bson.D{{Key: "sessionToken", Value: cookie.Value}}).Decode(&session)
+	err := collection.FindOne(context.TODO(), bson.D{{Key: "sessionToken", Value: cookie.Value}}).Decode(&session)
 	if err != nil {
-		return "", errors.New("failed find")
+		return ""
 	}
 
-	return session.UserName, nil
+	return session.UserName
 }
 
 func delete_session(cookie *http.Cookie) error {

@@ -3,7 +3,9 @@ if (userNameElement) {
 	userNameElement.innerText = userName;
 }
 
-const socket = new WebSocket(`ws://${window.location.host}/ws`);
+const Pathname = window.location.pathname;
+const HistoryPath = Pathname + "/history";
+const socket = new WebSocket(`ws://${window.location.host + Pathname}/ws`);
 const messages = document.getElementById("messages");
 const messageInput = document.getElementById("messageInput");
 
@@ -11,7 +13,6 @@ function displayMessage(data) {
 	const message = document.createElement("li");
 	try {
 		const parsedData = JSON.parse(data);
-
 		if (parsedData.from === userName) {
 			message.textContent = parsedData.text;
 			message.classList.add("sent-mes");
@@ -26,7 +27,6 @@ function displayMessage(data) {
 		message.textContent = data;
 		message.classList.add("received-mes");
 	}
-	
 	messages.appendChild(message);
 	messages.scrollTop = messages.scrollHeight;
 }
@@ -57,18 +57,28 @@ messageInput.addEventListener("keydown", function(event) {
 		event.preventDefault();
 		const messageText = messageInput.value.trim();
 		if (messageText !== "") {
-			const messagePayload = JSON.stringify({
-				from: userName,
-				text: messageText
-			});
-			socket.send(messagePayload);
+			if(Pathname === "/globalChat"){
+				const messagePayload = JSON.stringify({
+					from: userName,
+					text: messageText
+				});
+				socket.send(messagePayload);
+			} else {
+				const messagePayload = JSON.stringify({
+					from: userName,
+					to: Pathname.slice(6),
+					text: messageText
+				});
+				displayMessage(messagePayload);
+				socket.send(messagePayload);
+			}
 			messageInput.value = "";
 		}
 	}
 });
 
 function loadHistory() {
-	fetch("/history")
+	fetch(HistoryPath)
 		.then(response => {
 			if (!response.ok) {
 				throw new Error("Network response was not ok");
@@ -90,11 +100,6 @@ function loadHistory() {
 		});
 };
 
-
 window.onload = function () {
 	loadHistory();
 };
-// window.addEventListener("beforeunload", function (e) {
-// 	e.preventDefault();
-// 	e.returnValue = 'Сообщения будут потеряны.';
-// });

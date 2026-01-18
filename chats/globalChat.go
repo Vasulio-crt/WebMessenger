@@ -45,8 +45,8 @@ func GlobalChatWS(w http.ResponseWriter, r *http.Request) {
 	clients = append(clients, conn)
 	clientsMutex.Unlock()
 
-	userName, err := user.Get_user_name(r, cookie)
-	if err != nil {
+	userName := user.Get_user_name(cookie)
+	if userName == "" {
 		http.Error(w, "User name not found", http.StatusInternalServerError)
 		return
 	}

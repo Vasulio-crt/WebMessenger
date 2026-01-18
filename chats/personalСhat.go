@@ -4,17 +4,20 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"sort"
 	"webMessenger/database"
 	"webMessenger/user"
+	"webMessenger/user/utilities"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func GetChat(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")
-	if err != nil || !user.Session_check(cookie){
+	if err != nil || !user.Session_check(cookie) {
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
@@ -32,7 +35,7 @@ func GetChat(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./pages/chat.html")
 }
 
-func FindChat(w http.ResponseWriter, r *http.Request)  {
+func FindChat(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userName := vars["userName"]
 	collection := database.GetCollection("users")
@@ -49,8 +52,40 @@ func FindChat(w http.ResponseWriter, r *http.Request)  {
 	json.NewEncoder(w).Encode(response)
 }
 
-func PersonalHistory(w http.ResponseWriter, r *http.Request){
+func PersonalHistory(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("session")
+	if err != nil || !user.Session_check(cookie) {
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
+	users := []string{mux.Vars(r)["userName"]}
+	user1 := user.Get_user_name(cookie)
+	if user1 == "" {
+		http.Error(w, "User name not found", http.StatusInternalServerError)
+		return
+	}
+	users = append(users, user1)
+	sort.Strings(users)
+	hashChat := utilities.HashString(users[0] + users[1])
 
+	collection := database.GetCollectionHistory(hashChat)
+	cursor, err := collection.Find(r.Context(), bson.D{}, options.Find().SetLimit(60))
+	if err != nil {
+		http.Error(w, "Failed to retrieve message history", http.StatusInternalServerError)
+		log.Println("Error finding messages in MongoDB:", err)
+		return
+	}
+	defer cursor.Close(r.Context())
+
+	var chatHistory []Message
+	if err = cursor.All(r.Context(), &chatHistory); err != nil {
+		http.Error(w, "Failed to decode message history", http.StatusInternalServerError)
+		log.Println("Error decoding messages from MongoDB:", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(chatHistory)
 }
 
 var hub = newHub()
@@ -68,18 +103,14 @@ func PersonalChatWS(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	userName, err := user.Get_user_name(r, cookie)
-	if err != nil {
+	userName := user.Get_user_name(cookie)
+	if userName == "" {
 		http.Error(w, "User name not found", http.StatusInternalServerError)
 		return
 	}
 
-	client := &Client{
-		Name: userName,
-		Conn: conn,
-	}
-	hub.AddClient(client)
-	defer hub.RemoveClient(client.Name)
+	hub.AddClient(userName, conn)
+	defer hub.RemoveClient(userName)
 
 	for {
 		var msg MessageFromTo
@@ -91,7 +122,7 @@ func PersonalChatWS(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		msg.From = client.Name
+		msg.From = userName
 		hub.SendPrivateMessage(msg)
 	}
 }

@@ -2,101 +2,65 @@ package chats
 
 import (
 	"context"
+	"errors"
 	"log"
+	"sort"
 	"sync"
-	"time"
 	"webMessenger/database"
 	"webMessenger/user/utilities"
 
 	"github.com/gorilla/websocket"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type Client struct {
-	Name string
-	Conn *websocket.Conn
-}
-
-func (c *Client) SendMessage(msg MessageFromTo) error {
-	return c.Conn.WriteJSON(msg)
-}
-
-// ------- Hub -------
 type Hub struct {
-	clients map[string]*Client
+	clients map[string]*websocket.Conn //Name: Conn
 	mu      sync.RWMutex
 }
 
 func newHub() *Hub {
 	return &Hub{
-		clients: make(map[string]*Client),
+		clients: make(map[string]*websocket.Conn),
 	}
 }
 
-func (h *Hub) AddClient(c *Client) {
+func (h *Hub) AddClient(name string, conn *websocket.Conn) {
 	h.mu.Lock()
-	defer h.mu.Unlock()
-	h.clients[c.Name] = c
-	log.Printf("Пользователь подключен: %s", c.Name)
+	h.clients[name] = conn
+	h.mu.Unlock()
 }
 
-func (h *Hub) RemoveClient(id string) {
+func (h *Hub) RemoveClient(name string) {
 	h.mu.Lock()
-	defer h.mu.Unlock()
-	if c, ok := h.clients[id]; ok {
-		c.Conn.Close()
-		delete(h.clients, id)
-		log.Printf("Пользователь отключен: %s", id)
-	}
+	delete(h.clients, name)
+	h.mu.Unlock()
 }
 
 // SendPrivateMessage ищет получателя и пишет ему
-func (h *Hub) SendPrivateMessage(msg MessageFromTo) {
-	collectionInfo := database.GetCollectionHistory("info")
-	filter := bson.M{
-		"users": bson.M{
-			"$all": bson.A{msg.From, msg.To},
-		},
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	var info Info
-	var hashChat string
-	if err := collectionInfo.FindOne(ctx, filter).Decode(&info); err != nil {
-		if err == mongo.ErrNoDocuments {
-			hashChat = utilities.HashString(msg.From + msg.To)
-			_, err = collectionInfo.InsertOne(ctx, bson.M{"users": bson.A{msg.From, msg.To}, "chatName": hashChat})
-			if err != nil {
-				log.Println("Error inserting message to MongoDB:", err)
-				return
-			}
-		}
-		log.Fatal(err)
-	} else {
-		hashChat = info.ChatName
-	}
+func (h *Hub) SendPrivateMessage(msg MessageFromTo) error {
+	users := []string{msg.From, msg.To}
+	sort.Strings(users)
+	hashChat := utilities.HashString(users[0] + users[1])
 
 	h.mu.RLock()
 	recipient, ok := h.clients[msg.To]
 	h.mu.RUnlock()
 
 	if ok {
-		err := recipient.SendMessage(msg)
+		err := recipient.WriteJSON(msg)
 		if err != nil {
-			log.Printf("Ошибка отправки пользователю %s: %v", msg.To, err)
-			h.RemoveClient(recipient.Name)
-		}
-	} else {
-		collection := database.GetCollection(hashChat)
-		msgHistory := Message{
-			From: msg.From,
-			Text: msg.Text,
-		}
-		if _, err := collection.InsertOne(ctx, msgHistory); err != nil {
-			log.Println("Error inserting message to MongoDB:", err)
-			return
+			log.Printf("Error sending to user %s: %v. Deleting client.\n", msg.To, err)
+			h.RemoveClient(msg.To)
 		}
 	}
+	// Сохранение истории чата
+	collectionChats := database.GetCollectionHistory(hashChat)
+	bsonM := bson.M{
+		"From": msg.From,
+		"Text": msg.Text,
+	}
+	if _, err := collectionChats.InsertOne(context.TODO(), bsonM); err != nil {
+		return errors.New("Fail insertHistory")
+	}
+	return nil
 }
