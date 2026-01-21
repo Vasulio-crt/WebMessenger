@@ -37,27 +37,16 @@
 
 	<!-- Основной контент -->
 	<main class="main-content">
+		<button id="burger-menu">☰</button>
 		<h1>WebMessenger Облачко</h1>
 		<ul id="messages"></ul>
-		<input id="messageInput" maxlength="500" type="text" placeholder="Type message here and press Enter"/>
+		<div class="message-input-container">
+			<input id="messageInput" maxlength="500" type="text" placeholder="Type message here and press Enter"/>
+			<button id="sendMessageButton">Отправить</button>
+		</div>
 	</main>
-
+	<div id="notification-container"></div>
 	<script src="/resource/js/script.js"></script>
 	<script src="/resource/js/loadPages.js"></script>
-	<script>
-		document.getElementById('logoutButton').addEventListener('click', async function() {
-			try {
-				const response = await fetch('/logout', {
-					method: 'POST',
-				});
-				localStorage.removeItem('userName');
-				if (response.ok) {
-					window.location.href = '/login';
-				}
-			} catch (error) {
-				console.error('Error sending logout request:', error);
-			}
-		});
-	</script>
 </body>
 </html>

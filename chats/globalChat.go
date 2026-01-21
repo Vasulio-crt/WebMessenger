@@ -59,7 +59,7 @@ func GlobalChatWS(w http.ResponseWriter, r *http.Request) {
 				return c == conn
 			})
 			clientsMutex.Unlock()
-			log.Println("Error ReadJSON:", err)
+			// log.Println("Error ReadJSON:", err)
 			break
 		}
 

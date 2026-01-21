@@ -91,6 +91,7 @@ func delete_session(cookie *http.Cookie) error {
 	return nil
 }
 
+// Вернет true Если сессия найдена, а иначе false
 func Session_check(cookie *http.Cookie) bool {
 	_, ok := allSessions[cookie.Value]
 	if ok {
