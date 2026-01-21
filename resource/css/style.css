@@ -12,6 +12,10 @@
 	font-family: RazerF5, Arial;
 }
 
+::-webkit-scrollbar {
+	width: 0;
+}
+
 body {
 	display: flex;
 	height: 100vh;
@@ -157,9 +161,9 @@ body {
 #messages {
 	max-height: 38rem;
 	min-width: 100px;
-	max-width: 95%;
 	list-style-type: none;
 	padding: 20px;
+	padding-bottom: 10px;
 	overflow-y: auto;
 }
 
@@ -200,8 +204,6 @@ input {
 	font-size: 16px;
 	text-align: center;
 	width: 95%;
-	margin-bottom: 20px;
-	box-sizing: border-box;
 }
 
 input:focus-visible {
@@ -209,40 +211,104 @@ input:focus-visible {
 	outline: 2px solid #aebecd;
 }
 
-/* Адаптивность */
+#messageInput {
+	flex-grow: 1;
+	margin-right: 10px;
+}
+
+.message-input-container {
+	display: flex;
+	margin-bottom: 20px;
+}
+
+#sendMessageButton {
+	padding: 5px 20px;
+	background-color: #124e82;
+	color: #dae1e9;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	font-size: 16px;
+}
+
+#sendMessageButton:hover {
+	background-color: #1a6faa;
+}
+
+#notification-container {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	z-index: 1000;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.notification {
+	background-color: #124e82;
+	color: #dae1e9;
+	padding: 15px;
+	border-radius: 8px;
+	box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+	cursor: pointer;
+	transition: opacity 0.5s ease-in-out;
+}
+
+.notification:hover {
+	background-color: #1a6faa;
+}
+
+/* Burger Menu Button */
+#burger-menu {
+	display: none;
+	position: absolute;
+	top: 2rem;
+	left: 10px;
+	background: #124e82;
+	color: white;
+	border: none;
+	font-size: 35px;
+	padding: 0 10px;
+	border-radius: 5px;
+	cursor: pointer;
+	z-index: 1002;
+}
+
 @media (max-width: 768px) {
-	body {
-		flex-direction: column;
+	.sidebar {
+		position: relative;
+		overflow-x: hidden;
+	}
+
+	#sendMessageButton {
+		width: 100px;
+		padding: 2px;
+		font-size: 14px;
 	}
 	
 	.sidebar {
-		width: 100%;
-		height: auto;
+		position: fixed;
+		left: -250px;
+		top: 0;
+		height: 100%;
+		z-index: 1001;
+		transition: left 0.3s ease;
 	}
-	
-	.sidebar-menu {
-		display: flex;
-		overflow-x: auto;
+
+	.sidebar.open {
+		left: 0;
 	}
-	
-	.sidebar-menu ul {
-		display: flex;
+
+	#burger-menu {
+		display: block;
 	}
-	
-	.sidebar-menu li {
-		margin-bottom: 0;
-		margin-right: 5px;
+
+	.main-content h1 {
+		text-align: center;
 	}
-	
-	.sidebar-menu a {
-		white-space: nowrap;
-		border-left: none;
-		border-bottom: 3px solid transparent;
-	}
-	
-	.sidebar-menu a:hover,
-	.sidebar-menu a.active {
-		border-left: none;
-		border-bottom: 3px solid #3498db;
+
+	#notification-container {
+		top: 70px;
 	}
 }

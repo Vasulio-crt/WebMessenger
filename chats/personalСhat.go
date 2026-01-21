@@ -92,14 +92,14 @@ var hub = newHub()
 
 func PersonalChatWS(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")
-	if err == http.ErrNoCookie {
+	if err == http.ErrNoCookie || !user.Session_check(cookie) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Fatalln("Error GlobalChat: ", err)
+		log.Fatalln("Error PersonalChat: ", err)
 	}
 	defer conn.Close()
 
