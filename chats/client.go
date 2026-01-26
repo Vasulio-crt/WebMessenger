@@ -38,6 +38,22 @@ func (h *Hub) RemoveClient(name string) {
 
 // SendPrivateMessage ищет получателя и пишет ему
 func (h *Hub) SendPrivateMessage(msg MessageFromTo) error {
+	if msg.Type == "delete" {
+		return h.deletePrivateMessage(msg)
+	}
+	return h.sendAndSavePrivateMessage(msg)
+}
+
+func (h *Hub) deletePrivateMessage(msg MessageFromTo) error {
+	users := []string{msg.From, msg.To}
+	sort.Strings(users)
+	hashChat := utilities.HashString(users[0] + users[1])
+	collectionChat := database.GetCollectionHistory(hashChat)
+	_, err := collectionChat.DeleteOne(context.TODO(), bson.M{"timestamp": msg.Timestamp, "from": msg.From})
+	return err
+}
+
+func (h *Hub) sendAndSavePrivateMessage(msg MessageFromTo) error {
 	users := []string{msg.From, msg.To}
 	sort.Strings(users)
 	hashChat := utilities.HashString(users[0] + users[1])
@@ -52,12 +68,22 @@ func (h *Hub) SendPrivateMessage(msg MessageFromTo) error {
 			log.Printf("Error sending to user %s: %v. Deleting client.\n", msg.To, err)
 			h.RemoveClient(msg.To)
 		}
+	} else {
+		if conn, ok := clients[msg.To]; ok {
+			err := conn.WriteJSON(msg)
+			if err != nil {
+				log.Println("Error while writing message(SPM):", err)
+				conn.Close()
+				delete(clients, msg.To)
+			}
+		}
 	}
 	// Сохранение истории чата
 	collectionChats := database.GetCollectionHistory(hashChat)
 	bsonM := bson.M{
-		"From": msg.From,
-		"Text": msg.Text,
+		"from":      msg.From,
+		"text":      msg.Text,
+		"timestamp": msg.Timestamp,
 	}
 	if _, err := collectionChats.InsertOne(context.TODO(), bsonM); err != nil {
 		return errors.New("Fail insertHistory")

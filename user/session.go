@@ -73,7 +73,7 @@ func Get_user_name(cookie *http.Cookie) string {
 
 	var session Session
 	collection := database.GetCollection(collectionName)
-	err := collection.FindOne(context.TODO(), bson.D{{Key: "sessionToken", Value: cookie.Value}}).Decode(&session)
+	err := collection.FindOne(context.TODO(), bson.M{"sessionToken": cookie.Value}).Decode(&session)
 	if err != nil {
 		return ""
 	}
@@ -84,7 +84,7 @@ func Get_user_name(cookie *http.Cookie) string {
 func delete_session(cookie *http.Cookie) error {
 	delete(allSessions, cookie.Value)
 	collection := database.GetCollection(collectionName)
-	_, err := collection.DeleteOne(context.TODO(), bson.D{{Key: "sessionToken", Value: cookie.Value}})
+	_, err := collection.DeleteOne(context.TODO(), bson.M{"sessionToken": cookie.Value})
 	if err != nil {
 		return errors.New("failed delete session")
 	}

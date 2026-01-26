@@ -19,6 +19,7 @@
 body {
 	display: flex;
 	height: 100vh;
+	width: 100vw;
 	background-color: #dae1e9;
 }
 
@@ -161,6 +162,7 @@ body {
 #messages {
 	max-height: 38rem;
 	min-width: 100px;
+	max-width: calc(100vw - 250px - 60px);
 	list-style-type: none;
 	padding: 20px;
 	padding-bottom: 10px;
