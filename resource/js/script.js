@@ -24,6 +24,9 @@ function displayMessage(data) {
 			message.textContent = `${parsedData.from}: ${parsedData.text}`;
 			message.classList.add("received-mes");
 		}
+		if (parsedData.timestamp) {
+			message.dataset.time = parsedData.timestamp;
+		}
 	} catch (e) {
 		message.textContent = data;
 		message.classList.add("received-mes");
@@ -33,7 +36,7 @@ function displayMessage(data) {
 }
 
 socket.onopen = function(event) {
-	console.log("WebSocket connection established.");
+	console.log("WebSocket connection established."); // ---------Test
 };
 
 function showNotification(fromUser) {
@@ -57,7 +60,7 @@ function showNotification(fromUser) {
 socket.onmessage = function(event) {
 	try {
 		const parsedData = JSON.parse(event.data);
-		if (parsedData.from !== userName && Pathname !== `/chat/${parsedData.from}`) {
+		if (parsedData.to === userName && parsedData.from !== "server" && Pathname !== `/chat/${parsedData.from}`) {
 			showNotification(parsedData.from);
 			return;
 		}
@@ -68,7 +71,7 @@ socket.onmessage = function(event) {
 };
 
 socket.onclose = function(event) {
-	console.log("WebSocket connection closed.");
+	console.log("WebSocket connection closed."); // ---------Test
 	const message = document.createElement("li");
 	message.textContent = "Connection closed.";
 	message.style.textAlign = "center";
@@ -87,22 +90,52 @@ function sendMessage() {
 		return;
 	}
 
+	const timestampUnix = Math.floor(Date.now() / 1000);
+	console.log("timestampUnix", timestampUnix); // ---------Test
+	console.log("timestampUnix", Date(timestampUnix)); // ---------Test
 	let messagePayload;
 	if (Pathname === "/globalChat") {
 		messagePayload = JSON.stringify({
 			from: userName,
-			text: messageText
+			text: messageText,
+			timestamp: timestampUnix,
+			type: "message"
 		});
 	} else {
 		messagePayload = JSON.stringify({
 			from: userName,
 			to: Pathname.slice(6),
-			text: messageText
+			text: messageText,
+			timestamp: timestampUnix,
+			type: "message"
 		});
 		displayMessage(messagePayload);	
 	}
 	socket.send(messagePayload);
 	messageInput.value = "";
+}
+
+function deleteMessage(target) {
+	const timestamp = parseInt(target.dataset.time);
+	console.log("timestamp", timestamp); // ---------Test
+	if (!timestamp) return;
+
+	let messagePayload;
+	if (Pathname === "/globalChat") {
+		messagePayload = JSON.stringify({
+			from: userName,
+			timestamp: timestamp
+		});
+	} else {
+		messagePayload = JSON.stringify({
+			from: userName,
+			to: Pathname.slice(6),
+			timestamp: timestamp,
+			type: "delete"
+		});
+	}
+	socket.send(messagePayload);
+	target.remove();
 }
 
 messageInput.addEventListener("keydown", function(event) {
@@ -112,6 +145,15 @@ messageInput.addEventListener("keydown", function(event) {
 	}
 });
 sendMessageButton.addEventListener("click", sendMessage);
+
+messages.addEventListener('click', function(event) {
+	const target = event.target;
+	if (target.classList.contains('sent-mes')) {
+		if (confirm('Вы уверены, что хотите удалить это сообщение?')) {
+			deleteMessage(target);
+		}
+	}
+});
 
 // --- logout ---
 document.getElementById('logoutButton').addEventListener('click', async function() {
@@ -155,11 +197,11 @@ function loadHistory() {
 		})
 		.then(history => {
 			if (history === null) {
-				console.log("History is empty.");
+				console.log("History is empty."); // ---------Test
 			} else {
 				messages.innerHTML = ''; 
 				history.forEach((obj) => displayMessage(JSON.stringify(obj)));
-				console.log("History loaded.");
+				console.log("History loaded.", history); // ---------Test
 			}
 		})
 		.catch(error => {

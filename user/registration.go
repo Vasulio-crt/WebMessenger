@@ -34,20 +34,25 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Сохранения пользователя в БД
 	if req.UserName == "" || req.Password == "" {
 		http.Error(w, "fields are empty", http.StatusBadRequest)
 		return
 	}
-
+	
+	collection := database.GetCollection("users")
+	if err := collection.FindOne(r.Context(), bson.M{"userName": req.UserName}).Err(); err == nil {
+		http.Error(w, "user already exists", http.StatusBadRequest)
+		return
+	}
+	
 	hashedPassword, err := utilities.HashPassword(req.Password)
 	if err != nil {
 		http.Error(w, "error server (hash)", http.StatusInternalServerError)
 		return
 	}
 	req.Password = hashedPassword
-
-	collection := database.GetCollection("users")
+	
+	// Сохранения пользователя в БД
 	if _, err = collection.InsertOne(r.Context(), req); err != nil {
 		http.Error(w, "error server (db)", http.StatusInternalServerError)
 		return
@@ -77,7 +82,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	var userDB User
 	collection := database.GetCollection("users")
-	err := collection.FindOne(r.Context(), bson.D{{Key: "userName", Value: req.UserName}}).Decode(&userDB)
+	err := collection.FindOne(r.Context(), bson.M{"userName": req.UserName}).Decode(&userDB)
 	if err != nil {
 		http.Error(w, "error server (db)", http.StatusInternalServerError)
 		return

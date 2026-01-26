@@ -1,12 +1,10 @@
 package chats
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"slices"
 	"sync"
 	"webMessenger/database"
 	"webMessenger/user"
@@ -16,7 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var clients = make([]*websocket.Conn, 0)
+var clients = make(map[string]*websocket.Conn, 0)
 var clientsMutex sync.Mutex
 
 func GetGlobalChat(w http.ResponseWriter, r *http.Request) {
@@ -41,9 +39,6 @@ func GlobalChatWS(w http.ResponseWriter, r *http.Request) {
 		log.Fatalln("Error GlobalChat: ", err)
 	}
 	defer conn.Close()
-	clientsMutex.Lock()
-	clients = append(clients, conn)
-	clientsMutex.Unlock()
 
 	userName := user.Get_user_name(cookie)
 	if userName == "" {
@@ -51,32 +46,42 @@ func GlobalChatWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	clientsMutex.Lock()
+	clients[userName] = conn
+	clientsMutex.Unlock()
+
 	for {
 		var msg Message
 		if err := conn.ReadJSON(&msg); err != nil {
 			clientsMutex.Lock()
-			clients = slices.DeleteFunc(clients, func(c *websocket.Conn) bool {
-				return c == conn
-			})
+			conn.Close()
+			delete(clients, userName)
 			clientsMutex.Unlock()
 			// log.Println("Error ReadJSON:", err)
 			break
 		}
 
-		if len(msg.Text) == 0 {
+		// Удаление сообщения с БД
+		if msg.Text == "" {
+			collection := database.GetCollection("globalMessages")
+			_, err := collection.DeleteOne(r.Context(), bson.M{"timestamp": msg.Timestamp, "from": msg.From})
+			if err != nil{
+				log.Println("Error deleting message from MongoDB:", err)
+				continue
+			}
 			continue
 		}
 
 		if len(msg.Text) > maxMessageLength {
 			msg.From = "server"
-			msg.Text = "Your message is too long (max 500 chars)"
+			msg.Text = fmt.Sprintf("Your message is too long (max %d chars)", maxMessageLength)
 			conn.WriteJSON(msg)
 			continue
 		}
 
 		// Сохранение сообщения в БД
 		collection := database.GetCollection("globalMessages")
-		_, err = collection.InsertOne(context.TODO(), msg)
+		_, err = collection.InsertOne(r.Context(), msg)
 		if err != nil {
 			log.Println("Error inserting message to MongoDB:", err)
 			continue
@@ -91,12 +96,12 @@ func broadcastMessage(message *Message) {
 	clientsMutex.Lock()
 	defer clientsMutex.Unlock()
 
-	for i, client := range clients {
-		err := client.WriteJSON(message)
+	for client, conn := range clients {
+		err := conn.WriteJSON(message)
 		if err != nil {
 			log.Println("Error while writing message:", err)
-			client.Close()
-			clients = slices.Delete(clients, i, i+1)
+			conn.Close()
+			delete(clients, client)
 		}
 	}
 }
@@ -104,7 +109,7 @@ func broadcastMessage(message *Message) {
 func GlobalHistory(w http.ResponseWriter, r *http.Request) {
 	collection := database.GetCollection("globalMessages")
 
-	cursor, err := collection.Find(r.Context(), bson.D{}, options.Find().SetLimit(50))
+	cursor, err := collection.Find(r.Context(), bson.D{}, options.Find().SetLimit(100))
 	if err != nil {
 		http.Error(w, "Failed to retrieve message history", http.StatusInternalServerError)
 		fmt.Println("Error finding messages in MongoDB:", err)

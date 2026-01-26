@@ -2,6 +2,7 @@ package chats
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"sort"
@@ -10,7 +11,6 @@ import (
 	"webMessenger/user/utilities"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -26,7 +26,7 @@ func GetChat(w http.ResponseWriter, r *http.Request) {
 	userName := vars["userName"]
 	collection := database.GetCollection("users")
 	var user user.User
-	err = collection.FindOne(r.Context(), bson.D{{Key: "userName", Value: userName}}).Decode(&user)
+	err = collection.FindOne(r.Context(), bson.M{"userName": userName}).Decode(&user)
 	if err != nil {
 		http.ServeFile(w, r, "./pages/UserNotFound.html")
 		return
@@ -40,7 +40,7 @@ func FindChat(w http.ResponseWriter, r *http.Request) {
 	userName := vars["userName"]
 	collection := database.GetCollection("users")
 	var user user.User
-	err := collection.FindOne(r.Context(), bson.D{{Key: "userName", Value: userName}}).Decode(&user)
+	err := collection.FindOne(r.Context(), bson.M{"userName": userName}).Decode(&user)
 	response := make(map[string]bool, 1)
 
 	if err == nil && !user.IsNull() {
@@ -61,6 +61,7 @@ func PersonalHistory(w http.ResponseWriter, r *http.Request) {
 	users := []string{mux.Vars(r)["userName"]}
 	user1 := user.Get_user_name(cookie)
 	if user1 == "" {
+		//? Можно переделать
 		http.Error(w, "User name not found", http.StatusInternalServerError)
 		return
 	}
@@ -69,7 +70,7 @@ func PersonalHistory(w http.ResponseWriter, r *http.Request) {
 	hashChat := utilities.HashString(users[0] + users[1])
 
 	collection := database.GetCollectionHistory(hashChat)
-	cursor, err := collection.Find(r.Context(), bson.D{}, options.Find().SetLimit(60))
+	cursor, err := collection.Find(r.Context(), bson.D{}, options.Find().SetLimit(100))
 	if err != nil {
 		http.Error(w, "Failed to retrieve message history", http.StatusInternalServerError)
 		log.Println("Error finding messages in MongoDB:", err)
@@ -114,14 +115,24 @@ func PersonalChatWS(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		var msg MessageFromTo
-		err := conn.ReadJSON(&msg)
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
-			}
+		if err := conn.ReadJSON(&msg); err != nil {
+			// log.Println("Error ReadJSON(PS):", err)
 			break
 		}
 
+		if msg.Text == "" && msg.Type != "delete" {
+			msg.From = "server"
+			msg.Text = "What??? text < 1 char"
+			conn.WriteJSON(msg)
+			continue
+		}
+
+		if len(msg.Text) > maxMessageLength {
+			msg.From = "server"
+			msg.Text = fmt.Sprintf("Your message is too long (max %d chars)", maxMessageLength)
+			conn.WriteJSON(msg)
+			continue
+		}
 		msg.From = userName
 		hub.SendPrivateMessage(msg)
 	}
