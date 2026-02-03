@@ -36,7 +36,7 @@ function displayMessage(data) {
 }
 
 socket.onopen = function(event) {
-	console.log("WebSocket connection established."); // ---------Test
+	// console.log("WebSocket connection established."); // ---------Test
 };
 
 function showNotification(fromUser) {
@@ -46,6 +46,7 @@ function showNotification(fromUser) {
 	notification.textContent = `Новое сообщение от ${fromUser}`;
 
 	notification.onclick = () => {
+		addPersonalChat(fromUser);
 		window.location.href = `/chat/${fromUser}`;
 	};
 
@@ -71,7 +72,7 @@ socket.onmessage = function(event) {
 };
 
 socket.onclose = function(event) {
-	console.log("WebSocket connection closed."); // ---------Test
+	//console.log("WebSocket connection closed."); // ---------Test
 	const message = document.createElement("li");
 	message.textContent = "Connection closed.";
 	message.style.textAlign = "center";
@@ -91,8 +92,8 @@ function sendMessage() {
 	}
 
 	const timestampUnix = Math.floor(Date.now() / 1000);
-	console.log("timestampUnix", timestampUnix); // ---------Test
-	console.log("timestampUnix", Date(timestampUnix)); // ---------Test
+	// console.log("timestampUnix", timestampUnix); // ---------Test
+	// console.log("timestampUnix", Date(timestampUnix)); // ---------Test
 	let messagePayload;
 	if (Pathname === "/globalChat") {
 		messagePayload = JSON.stringify({
@@ -117,7 +118,7 @@ function sendMessage() {
 
 function deleteMessage(target) {
 	const timestamp = parseInt(target.dataset.time);
-	console.log("timestamp", timestamp); // ---------Test
+	// console.log("timestamp", timestamp); // ---------Test
 	if (!timestamp) return;
 
 	let messagePayload;
@@ -197,11 +198,11 @@ function loadHistory() {
 		})
 		.then(history => {
 			if (history === null) {
-				console.log("History is empty."); // ---------Test
+				// console.log("History is empty."); // ---------Test
 			} else {
 				messages.innerHTML = ''; 
 				history.forEach((obj) => displayMessage(JSON.stringify(obj)));
-				console.log("History loaded.", history); // ---------Test
+				// console.log("History loaded.", history); // ---------Test
 			}
 		})
 		.catch(error => {
