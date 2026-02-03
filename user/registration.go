@@ -84,7 +84,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	collection := database.GetCollection("users")
 	err := collection.FindOne(r.Context(), bson.M{"userName": req.UserName}).Decode(&userDB)
 	if err != nil {
-		http.Error(w, "error server (db)", http.StatusInternalServerError)
+		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
 
