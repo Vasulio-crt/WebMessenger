@@ -22,9 +22,6 @@ services:
     image: mongo:latest
     expose:
       - 27017
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=admin12345
     volumes:
       - mongo-data:/data/db
     networks:

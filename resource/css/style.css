@@ -278,6 +278,10 @@ input:focus-visible {
 }
 
 @media (max-width: 768px) {
+	#messages {
+		max-width: none;
+	}
+
 	.sidebar {
 		position: relative;
 		overflow-x: hidden;
