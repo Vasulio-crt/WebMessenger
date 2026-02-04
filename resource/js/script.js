@@ -5,7 +5,7 @@ if (userNameElement) {
 
 const Pathname = window.location.pathname;
 const HistoryPath = Pathname + "/history";
-const socket = new WebSocket(`ws://${window.location.host + Pathname}/ws`);
+const socket = new WebSocket(`wss://${window.location.host + Pathname}/ws`);
 const messages = document.getElementById("messages");
 const messageInput = document.getElementById("messageInput");
 const sendMessageButton = document.getElementById("sendMessageButton");

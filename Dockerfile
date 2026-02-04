@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
@@ -13,6 +13,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-w -s' -o 
 FROM alpine:latest
 WORKDIR /root/
 COPY --from=builder /app/webMessenger .
+
+COPY resource resource
+COPY pages pages
 
 EXPOSE 8080
 CMD ["./webMessenger"]

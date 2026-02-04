@@ -1,4 +1,4 @@
-const HOST = 'http://' + window.location.host;
+const HOST = window.location.origin;
 
 /**
  * Настраивает обработчик отправки формы для аутентификации (регистрация или вход).
