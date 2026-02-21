@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,9 +16,13 @@ var MongoClient *mongo.Client
 const DBNAME = "webMessenger"
 const DBNAME_HISTORY = "personalHistory"
 
-// Устанавливает соединение с БД.
 func ConnectDB() {
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	mongoURI := os.Getenv("MONGODB_URI")
+	if mongoURI == "" {
+		mongoURI = "mongodb://localhost:27017"
+		fmt.Println("MONGODB_URI not found, using default value:", mongoURI)
+	}
+	clientOptions := options.Client().ApplyURI(mongoURI)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
