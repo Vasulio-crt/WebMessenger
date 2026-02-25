@@ -72,7 +72,7 @@ func main() {
 	router.HandleFunc("/chat", redirect)
 	router.HandleFunc("/", redirect)
 
-	fmt.Println("Запуск сервера на localhost:8080")
+	fmt.Println("Start webMessage")
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		fmt.Println("Error starting server:", err)
 	}

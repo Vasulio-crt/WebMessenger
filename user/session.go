@@ -49,7 +49,7 @@ func Init_sessions() error {
 	collection := database.GetCollection(collectionName)
 	cursor, err := collection.Find(context.TODO(), bson.D{})
 	if err != nil {
-		return errors.New("failed to find sessions")
+		return err
 	}
 	defer cursor.Close(context.TODO())
 
