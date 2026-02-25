@@ -7,11 +7,12 @@ RUN go mod tidy
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-w -s' -o webMessenger .
+RUN go build -o webMessenger .
 
 
 FROM alpine:latest
-WORKDIR /root/
+
+WORKDIR /root
 COPY --from=builder /app/webMessenger .
 
 COPY resource resource
