@@ -18,8 +18,8 @@
 
 body {
 	display: flex;
-	height: 100vh;
-	width: 100vw;
+	height: 100dvh;
+	width: 100dvw;
 	background-color: #dae1e9;
 }
 
@@ -152,21 +152,39 @@ body {
 	cursor: pointer;
 }
 
+header {
+	display: flex;
+	color: #e3e8ed;
+	background-color: #1a6faa;
+	border-bottom: 2px solid #90a5ba;
+	& h1 {
+		padding-left: 10px;
+	}
+}
+
+/* Стили для контейнера основного контента */
+.container-main {
+	flex: 1;
+	display: flex;
+    flex-direction: column;
+}
+
 /* Стили основного контента */
 .main-content {
 	flex: 1;
-	padding: 30px;
+	padding: 10px 30px;
+	display: flex;
+	flex-direction: column;
+	justify-content: end;
 }
 
 /* Messages */
 #messages {
-	max-height: 38rem;
-	min-width: 100px;
-	max-width: calc(100vw - 250px - 60px);
+	max-height: 80vh;
 	list-style-type: none;
 	padding: 20px;
 	padding-bottom: 10px;
-	overflow-y: auto;
+	overflow-y: scroll;
 }
 
 #messages li {
@@ -264,15 +282,11 @@ input:focus-visible {
 /* Burger Menu Button */
 #burger-menu {
 	display: none;
-	position: absolute;
-	top: 2rem;
-	left: 10px;
 	background: #124e82;
 	color: white;
 	border: none;
 	font-size: 35px;
 	padding: 0 10px;
-	border-radius: 5px;
 	cursor: pointer;
 	z-index: 1002;
 }

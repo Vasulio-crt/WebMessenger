@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"sync"
 	"webMessenger/database"
-	"webMessenger/user"
 
 	"github.com/gorilla/websocket"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,29 +17,17 @@ var clients = make(map[string]*websocket.Conn, 0)
 var clientsMutex sync.Mutex
 
 func GetGlobalChat(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("session")
-	if err != nil || !user.Session_check(cookie){
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
-
 	http.ServeFile(w, r, "./pages/chat.html")
 }
 
 func GlobalChatWS(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("session")
-	if err == http.ErrNoCookie {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatalln("Error GlobalChat: ", err)
 	}
 	defer conn.Close()
 
-	userName := user.Get_user_name(cookie)
+	userName := r.Context().Value("userName").(string)
 	if userName == "" {
 		http.Error(w, "User name not found", http.StatusInternalServerError)
 		return

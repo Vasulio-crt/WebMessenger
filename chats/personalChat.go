@@ -16,17 +16,11 @@ import (
 )
 
 func GetChat(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("session")
-	if err != nil || !user.Session_check(cookie) {
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
-
 	vars := mux.Vars(r)
 	userName := vars["userName"]
 	collection := database.GetCollection("users")
 	var user user.User
-	err = collection.FindOne(r.Context(), bson.M{"userName": userName}).Decode(&user)
+	err := collection.FindOne(r.Context(), bson.M{"userName": userName}).Decode(&user)
 	if err != nil {
 		http.ServeFile(w, r, "./pages/UserNotFound.html")
 		return
@@ -53,13 +47,8 @@ func FindChat(w http.ResponseWriter, r *http.Request) {
 }
 
 func PersonalHistory(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("session")
-	if err != nil || !user.Session_check(cookie) {
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
 	users := []string{mux.Vars(r)["userName"]}
-	user1 := user.Get_user_name(cookie)
+	user1 := r.Context().Value("userName").(string)
 	if user1 == "" {
 		//? Можно переделать
 		http.Error(w, "User name not found", http.StatusInternalServerError)
@@ -92,19 +81,13 @@ func PersonalHistory(w http.ResponseWriter, r *http.Request) {
 var hub = newHub()
 
 func PersonalChatWS(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("session")
-	if err == http.ErrNoCookie || !user.Session_check(cookie) {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatalln("Error PersonalChat: ", err)
 	}
 	defer conn.Close()
 
-	userName := user.Get_user_name(cookie)
+	userName := r.Context().Value("userName").(string)
 	if userName == "" {
 		http.Error(w, "User name not found", http.StatusInternalServerError)
 		return

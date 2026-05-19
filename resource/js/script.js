@@ -5,7 +5,9 @@ if (userNameElement) {
 
 const Pathname = window.location.pathname;
 const HistoryPath = Pathname + "/history";
-const socket = new WebSocket(`wss://${window.location.host + Pathname}/ws`);
+
+const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+const socket = new WebSocket(`${wsProtocol}://${window.location.host}${Pathname}/ws`);
 const messages = document.getElementById("messages");
 const messageInput = document.getElementById("messageInput");
 const sendMessageButton = document.getElementById("sendMessageButton");
@@ -214,3 +216,13 @@ function loadHistory() {
 window.onload = function () {
 	loadHistory();
 };
+
+function setChatTitle() {
+	const chatTitle = document.getElementById('chat-title');
+	if (Pathname === '/globalChat') {
+		chatTitle.textContent = 'GLOBAL CHAT';
+	} else if (Pathname.startsWith('/chat/')) {
+		chatTitle.textContent = Pathname.substring(6);
+	}
+}
+setChatTitle();

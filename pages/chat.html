@@ -36,16 +36,20 @@
 	</div>
 
 	<!-- Основной контент -->
-	<main class="main-content">
-		<button id="burger-menu">☰</button>
-		<h1>WebMessenger Облачко</h1>
-		<ul id="messages"></ul>
-		<div class="message-input-container">
-			<input id="messageInput" maxlength="1024" type="text" placeholder="Type message here and press Enter"/>
-			<button id="sendMessageButton">Отправить</button>
-		</div>
-	</main>
-	<div id="notification-container"></div>
+	<div class="container-main">
+		<header>
+			<button id="burger-menu">☰</button>
+			<h1 id="chat-title"></h1>
+		</header>
+		<main class="main-content">
+			<ul id="messages"></ul>
+			<div class="message-input-container">
+				<input id="messageInput" maxlength="1024" type="text" placeholder="Type message here and press Enter"/>
+				<button id="sendMessageButton">Отправить</button>
+			</div>
+		</main>
+		<div id="notification-container"></div>
+	</div>
 	<script src="/resource/js/script.js"></script>
 	<script src="/resource/js/loadPages.js"></script>
 </body>
